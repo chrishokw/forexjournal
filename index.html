@@ -464,6 +464,154 @@
   .pair-option.no-results { color: var(--muted); cursor: default; font-family: var(--sans); }
   .pair-option.no-results:hover { background: transparent; }
 
+  /* ── Report view ── */
+  .report-list { display: flex; flex-direction: column; gap: 20px; }
+
+  .report-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: border-color 0.15s;
+  }
+  .report-card:hover { border-color: var(--border2); }
+  .report-card.tp  { border-top: 3px solid var(--green); }
+  .report-card.sl  { border-top: 3px solid var(--red); }
+  .report-card.pending { border-top: 3px solid var(--amber); }
+
+  /* header bar across full width */
+  .rc-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg3);
+    flex-wrap: wrap; gap: 8px;
+  }
+  .rc-header-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .rc-trade-num {
+    font-size: 11px; font-weight: 700; color: var(--muted);
+    font-family: var(--mono); letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  /* two-column body */
+  .rc-body {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    min-height: 200px;
+  }
+
+  /* left: image column */
+  .rc-images-col {
+    border-right: 1px solid var(--border);
+    background: #0a0c0f;
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .rc-main-img-wrap {
+    position: relative;
+    flex: 1;
+    min-height: 180px;
+    overflow: hidden;
+    cursor: pointer;
+  }
+  .rc-main-img-wrap:hover .rc-img-overlay { opacity: 1; }
+  .rc-main-img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.25s;
+  }
+  .rc-main-img-wrap:hover .rc-main-img { transform: scale(1.03); }
+  .rc-img-overlay {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.35);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 0.2s;
+  }
+  .rc-img-overlay-icon {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255,255,255,0.25);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; color: #fff;
+  }
+  .rc-img-strip {
+    display: flex; gap: 2px; padding: 2px;
+    background: #080a0d;
+    flex-wrap: wrap;
+  }
+  .rc-strip-thumb {
+    width: 58px; height: 44px;
+    object-fit: cover; cursor: pointer;
+    opacity: 0.7; transition: opacity 0.15s, outline 0.15s;
+    border-radius: 3px;
+  }
+  .rc-strip-thumb:hover, .rc-strip-thumb.active { opacity: 1; outline: 2px solid var(--accent); }
+  .rc-no-img {
+    flex: 1; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    color: var(--faint); font-size: 13px; gap: 8px;
+    padding: 2rem;
+  }
+  .rc-no-img-icon { font-size: 2rem; }
+  .rc-img-count-badge {
+    position: absolute; bottom: 8px; right: 8px;
+    background: rgba(0,0,0,0.65);
+    backdrop-filter: blur(4px);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 99px;
+    font-size: 11px; font-family: var(--mono);
+    color: #fff; padding: 2px 9px;
+  }
+
+  /* right: info column */
+  .rc-info-col {
+    padding: 20px 24px;
+    display: flex; flex-direction: column; gap: 18px;
+  }
+
+  .rc-section-label {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.09em;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 8px;
+  }
+
+  .rc-price-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 10px;
+  }
+  .rc-price-cell {
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 10px 12px;
+  }
+  .rc-price-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 4px; }
+  .rc-price-val { font-size: 15px; font-weight: 600; font-family: var(--mono); }
+  .rc-price-val.pos { color: var(--green); }
+  .rc-price-val.neg { color: var(--red); }
+
+  .rc-reasons-wrap { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .rc-remarks-box {
+    background: var(--bg3); border-radius: var(--radius-sm);
+    border-left: 3px solid var(--faint);
+    padding: 10px 14px;
+    font-size: 13px; color: var(--muted); font-style: italic;
+    line-height: 1.6;
+  }
+
+  .rc-footer {
+    padding: 10px 20px;
+    border-top: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: flex-end;
+    gap: 8px;
+  }
+
+  @media (max-width: 780px) {
+    .rc-body { grid-template-columns: 1fr; }
+    .rc-images-col { border-right: none; border-bottom: 1px solid var(--border); min-height: 200px; }
+  }
+
   @media (max-width: 640px) {
     .stats { grid-template-columns: repeat(3,1fr); }
     .row2, .row3 { grid-template-columns: 1fr; }
@@ -482,12 +630,12 @@
 ════════════════════════════════════════════ -->
 <script>
   const FIREBASE_CONFIG = {
-    apiKey: "AIzaSyA7PsEhoP9g2TNBxB3Qh_MFg62bhRCaoQ8",
-  authDomain: "forexjournalstorage.firebaseapp.com",
-  projectId: "forexjournalstorage",
-  storageBucket: "forexjournalstorage.firebasestorage.app",
-  messagingSenderId: "985731404823",
-  appId: "1:985731404823:web:5fa8d9d502d24b9c1af852"
+    apiKey:            "YOUR_API_KEY",
+    authDomain:        "YOUR_PROJECT_ID.firebaseapp.com",
+    projectId:         "YOUR_PROJECT_ID",
+    storageBucket:     "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId:             "YOUR_APP_ID"
   };
 </script>
 <!-- ════════════════════════════════════════ -->
@@ -531,6 +679,7 @@
   <div class="tab-nav">
     <button class="tab-btn active" onclick="switchTab('log')">📋 Trade Log</button>
     <button class="tab-btn" onclick="switchTab('calendar')">📅 Calendar</button>
+    <button class="tab-btn" onclick="switchTab('report')">📄 Report</button>
   </div>
 
   <!-- ── TAB: Trade Log ── -->
@@ -589,6 +738,17 @@
         <button class="btn btn-ghost btn-sm" onclick="closeDayDetail()">✕ Close</button>
       </div>
       <div class="trades" id="cal-detail-trades"></div>
+    </div>
+  </div>
+
+  <!-- ── TAB: Report ── -->
+  <div class="tab-panel" id="tab-report">
+    <div class="section-header">
+      <span class="section-title">Trade report</span>
+      <span style="font-size:12px;color:var(--muted)">Images left · Details right · Click any image to expand</span>
+    </div>
+    <div class="report-list" id="report-list">
+      <div class="empty"><div class="empty-icon">📄</div><p>No trades yet.</p></div>
     </div>
   </div>
 
@@ -756,10 +916,12 @@ const MONTHS = ['January','February','March','April','May','June','July','August
 // Tab switching
 // ─────────────────────────────
 function switchTab(tab) {
-  document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', ['log','calendar'][i] === tab));
+  const tabs = ['log','calendar','report'];
+  document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', tabs[i] === tab));
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
   if (tab === 'calendar') renderCalendar();
+  if (tab === 'report') renderReport();
 }
 
 // ─────────────────────────────
@@ -912,8 +1074,9 @@ async function saveEdit() {
     Object.assign(t, updates);
     renderStats();
     renderTrades(trades);
-    // refresh calendar if open
+    // refresh calendar/report if open
     if (document.getElementById('tab-calendar').classList.contains('active')) renderCalendar();
+    if (document.getElementById('tab-report').classList.contains('active')) renderReport();
     closeModals();
   } catch(e) {
     setStatus('edit', 'err', 'Error: ' + e.message);
@@ -929,6 +1092,7 @@ async function deleteTrade() {
     renderStats();
     renderTrades(trades);
     if (document.getElementById('tab-calendar').classList.contains('active')) renderCalendar();
+    if (document.getElementById('tab-report').classList.contains('active')) renderReport();
     closeModals();
   } catch(e) { alert('Error: ' + e.message); }
 }
@@ -1382,6 +1546,161 @@ document.addEventListener('click', e => {
     if (!dd.closest('.pair-selector').contains(e.target)) dd.classList.remove('open');
   });
 });
+
+// ─────────────────────────────
+// Report view
+// ─────────────────────────────
+// Per-card active image index (keyed by trade id)
+const reportImgIdx = {};
+
+function reportCardHtml(t, tradeNum) {
+  const oc = t.outcome === 'TP' ? 'tp' : t.outcome === 'SL' ? 'sl' : 'pending';
+  const dirBadge = t.direction === 'Long' ? 'badge-long' : 'badge-short';
+  const ocBadge = t.outcome === 'TP' ? 'badge-tp' : t.outcome === 'SL' ? 'badge-sl' : 'badge-pending';
+  const reasons = [{key:'fvg',label:'Fair Value Gap',tag:'FVG'},{key:'bos',label:'Break of Structure',tag:'BOS'},{key:'liq',label:'Sweep of Liquidity',tag:'SWP'}];
+
+  // Prices section
+  const prices = [
+    { label: 'Entry', val: fmt(t.entry), cls: '' },
+    ...(t.tp  ? [{ label: 'Take Profit', val: fmt(t.tp),  cls: 'pos' }] : []),
+    ...(t.sl  ? [{ label: 'Stop Loss',   val: fmt(t.sl),  cls: 'neg' }] : []),
+    ...(t.pnl != null ? [{ label: 'P & L', val: fmtPnl(t.pnl), cls: t.pnl >= 0 ? 'pos' : 'neg' }] : []),
+  ];
+  const priceGrid = prices.map(p =>
+    `<div class="rc-price-cell">
+      <div class="rc-price-label">${p.label}</div>
+      <div class="rc-price-val ${p.cls}">${p.val}</div>
+    </div>`
+  ).join('');
+
+  // Reasons
+  const reasonPills = reasons.map(r =>
+    `<span class="rpill ${t[r.key] ? 'on' : ''}"><span class="rpill-dot"></span>${r.tag}</span>`
+  ).join('');
+  const activeReasons = reasons.filter(r => t[r.key]).map(r => r.label);
+
+  // Images column
+  const imgs = t.imageUrls && t.imageUrls.length ? t.imageUrls : [];
+  if (!reportImgIdx[t.id]) reportImgIdx[t.id] = 0;
+  const activeIdx = Math.min(reportImgIdx[t.id], imgs.length - 1);
+
+  let imagesColHtml;
+  if (imgs.length === 0) {
+    imagesColHtml = `<div class="rc-no-img">
+      <div class="rc-no-img-icon">🖼</div>
+      <span>No screenshots</span>
+    </div>`;
+  } else {
+    const stripThumbs = imgs.map((u,i) =>
+      `<img class="rc-strip-thumb ${i === activeIdx ? 'active' : ''}" src="${u}"
+        alt="thumb ${i+1}"
+        onclick="reportSwitchImg('${t.id}', ${i})"
+        title="Screenshot ${i+1}">`
+    ).join('');
+
+    const countBadge = imgs.length > 1
+      ? `<div class="rc-img-count-badge">${activeIdx + 1} / ${imgs.length}</div>`
+      : '';
+
+    imagesColHtml = `
+      <div class="rc-main-img-wrap" onclick="openLightbox(${JSON.stringify(imgs)}, ${activeIdx})" id="rc-main-wrap-${t.id}">
+        <img class="rc-main-img" id="rc-main-img-${t.id}" src="${imgs[activeIdx]}" alt="Trade screenshot">
+        <div class="rc-img-overlay"><div class="rc-img-overlay-icon">⤢</div></div>
+        ${countBadge}
+      </div>
+      ${imgs.length > 1 ? `<div class="rc-img-strip" id="rc-strip-${t.id}">${stripThumbs}</div>` : ''}
+    `;
+  }
+
+  // Format date nicely
+  const dateLabel = t.date ? (() => {
+    const [y,m,d] = t.date.split('-').map(Number);
+    return new Date(y,m-1,d).toLocaleDateString('en-SG', { weekday:'short', year:'numeric', month:'short', day:'numeric' });
+  })() : '—';
+
+  return `<div class="report-card ${oc}" id="rcard-${t.id}">
+    <!-- Header -->
+    <div class="rc-header">
+      <div class="rc-header-left">
+        <span class="rc-trade-num">#${tradeNum}</span>
+        <span class="badge badge-pair">${t.pair}</span>
+        <span class="badge ${dirBadge}">${t.direction}</span>
+        <span class="badge ${ocBadge}">${t.outcome}</span>
+      </div>
+      <span style="font-size:12px;color:var(--muted);font-family:var(--mono)">${dateLabel}</span>
+    </div>
+
+    <!-- Two-column body -->
+    <div class="rc-body">
+
+      <!-- LEFT: images -->
+      <div class="rc-images-col">${imagesColHtml}</div>
+
+      <!-- RIGHT: info -->
+      <div class="rc-info-col">
+
+        <!-- Prices -->
+        <div>
+          <div class="rc-section-label">Price levels</div>
+          <div class="rc-price-grid">${priceGrid}</div>
+        </div>
+
+        <!-- Setup reasons -->
+        <div>
+          <div class="rc-section-label">Setup confluences</div>
+          <div class="rc-reasons-wrap">${reasonPills}</div>
+          ${activeReasons.length ? `<div style="font-size:12px;color:var(--muted);margin-top:8px;line-height:1.7">${activeReasons.join(' · ')}</div>` : ''}
+        </div>
+
+        <!-- Remarks -->
+        ${t.remarks ? `<div>
+          <div class="rc-section-label">Notes</div>
+          <div class="rc-remarks-box">${t.remarks}</div>
+        </div>` : ''}
+
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="rc-footer">
+      <button class="btn btn-sm" onclick="openEdit('${t.id}')">✏ Edit trade</button>
+      ${imgs.length ? `<button class="btn btn-sm" onclick="openLightbox(${JSON.stringify(imgs)}, 0)">🔍 View all images (${imgs.length})</button>` : ''}
+    </div>
+  </div>`;
+}
+
+function renderReport() {
+  const el = document.getElementById('report-list');
+  if (!trades.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">📄</div><p>No trades yet — hit <strong>Log trade</strong> to add your first setup.</p></div>`;
+    return;
+  }
+  el.innerHTML = trades.map((t, i) => reportCardHtml(t, trades.length - i)).join('');
+}
+
+function reportSwitchImg(tradeId, idx) {
+  reportImgIdx[tradeId] = idx;
+  const t = trades.find(x => x.id === tradeId);
+  if (!t || !t.imageUrls) return;
+
+  // Update main image
+  const mainImg = document.getElementById(`rc-main-img-${tradeId}`);
+  if (mainImg) mainImg.src = t.imageUrls[idx];
+
+  // Update main wrap onclick for lightbox
+  const mainWrap = document.getElementById(`rc-main-wrap-${tradeId}`);
+  if (mainWrap) mainWrap.onclick = () => openLightbox(t.imageUrls, idx);
+
+  // Update count badge
+  const countBadge = mainWrap && mainWrap.querySelector('.rc-img-count-badge');
+  if (countBadge) countBadge.textContent = `${idx + 1} / ${t.imageUrls.length}`;
+
+  // Update strip active state
+  const strip = document.getElementById(`rc-strip-${tradeId}`);
+  if (strip) {
+    strip.querySelectorAll('.rc-strip-thumb').forEach((th, i) => th.classList.toggle('active', i === idx));
+  }
+}
 
 // ─────────────────────────────
 // Boot
