@@ -464,6 +464,29 @@
   .pair-option.no-results { color: var(--muted); cursor: default; font-family: var(--sans); }
   .pair-option.no-results:hover { background: transparent; }
 
+  /* Session selector */
+  .session-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px; }
+  .session-btn {
+    display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+    padding: 9px 11px; border: 1px solid var(--border); border-radius: var(--radius-sm);
+    background: var(--bg3); cursor: pointer; transition: all 0.15s;
+    text-align: left; width: 100%;
+  }
+  .session-btn:hover { border-color: var(--border2); background: var(--bg2); }
+  .session-btn.selected { border-color: var(--accent); background: var(--accent-bg); }
+  .session-btn-top { display: flex; align-items: center; gap: 6px; }
+  .session-icon { font-size: 14px; }
+  .session-btn-name { font-size: 12px; font-weight: 700; color: var(--text); }
+  .session-btn.selected .session-btn-name { color: var(--accent); }
+  .session-btn-hours { font-size: 10px; color: var(--muted); font-family: var(--mono); margin-top: 1px; }
+  .badge-asian          { background: rgba(251,191,36,0.1);  border-color: rgba(251,191,36,0.4);  color: #fbbf24; }
+  .badge-london         { background: rgba(96,165,250,0.1);  border-color: rgba(96,165,250,0.4);  color: #60a5fa; }
+  .badge-newyork        { background: rgba(167,139,250,0.1); border-color: rgba(167,139,250,0.4); color: #a78bfa; }
+  .badge-sydney         { background: rgba(52,211,153,0.1);  border-color: rgba(52,211,153,0.4);  color: #34d399; }
+  .badge-london-newyork { background: rgba(249,115,22,0.1);  border-color: rgba(249,115,22,0.4);  color: #fb923c; }
+  .badge-asian-london   { background: rgba(236,72,153,0.1);  border-color: rgba(236,72,153,0.4);  color: #f472b6; }
+
+
   /* ── Report view ── */
   .report-list { display: flex; flex-direction: column; gap: 20px; }
 
@@ -630,12 +653,12 @@
 ════════════════════════════════════════════ -->
 <script>
   const FIREBASE_CONFIG = {
-   apiKey: "AIzaSyA7PsEhoP9g2TNBxB3Qh_MFg62bhRCaoQ8",
-  authDomain: "forexjournalstorage.firebaseapp.com",
-  projectId: "forexjournalstorage",
-  storageBucket: "forexjournalstorage.firebasestorage.app",
-  messagingSenderId: "985731404823",
-  appId: "1:985731404823:web:5fa8d9d502d24b9c1af852"
+    apiKey:            "YOUR_API_KEY",
+    authDomain:        "YOUR_PROJECT_ID.firebaseapp.com",
+    projectId:         "YOUR_PROJECT_ID",
+    storageBucket:     "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId:             "YOUR_APP_ID"
   };
 </script>
 <!-- ════════════════════════════════════════ -->
@@ -783,6 +806,36 @@
       <div class="field"><label>Date</label><input id="f-date" type="date"></div>
     </div>
     <div class="field">
+      <label>Trading session</label>
+      <div class="session-grid" id="session-grid-add">
+        <button type="button" class="session-btn" data-session="Asian" onclick="selectSession('add','Asian')">
+          <div class="session-btn-top"><span class="session-icon">🌏</span><span class="session-btn-name">Asian</span></div>
+          <div class="session-btn-hours">00:00 – 09:00 UTC</div>
+        </button>
+        <button type="button" class="session-btn" data-session="Sydney" onclick="selectSession('add','Sydney')">
+          <div class="session-btn-top"><span class="session-icon">🦘</span><span class="session-btn-name">Sydney</span></div>
+          <div class="session-btn-hours">21:00 – 06:00 UTC</div>
+        </button>
+        <button type="button" class="session-btn" data-session="London" onclick="selectSession('add','London')">
+          <div class="session-btn-top"><span class="session-icon">🇬🇧</span><span class="session-btn-name">London</span></div>
+          <div class="session-btn-hours">08:00 – 17:00 UTC</div>
+        </button>
+        <button type="button" class="session-btn" data-session="New York" onclick="selectSession('add','New York')">
+          <div class="session-btn-top"><span class="session-icon">🗽</span><span class="session-btn-name">New York</span></div>
+          <div class="session-btn-hours">13:00 – 22:00 UTC</div>
+        </button>
+        <button type="button" class="session-btn" data-session="London/NY" onclick="selectSession('add','London/NY')">
+          <div class="session-btn-top"><span class="session-icon">⚡</span><span class="session-btn-name">London/NY</span></div>
+          <div class="session-btn-hours">13:00 – 17:00 UTC</div>
+        </button>
+        <button type="button" class="session-btn" data-session="Asian/London" onclick="selectSession('add','Asian/London')">
+          <div class="session-btn-top"><span class="session-icon">🌅</span><span class="session-btn-name">Asian/London</span></div>
+          <div class="session-btn-hours">07:00 – 09:00 UTC</div>
+        </button>
+      </div>
+      <input type="hidden" id="f-session">
+    </div>
+    <div class="field">
       <label>Trade reasons</label>
       <div class="checks">
         <div class="check-item" id="ci-fvg" onclick="toggleCheck(this,'r-fvg')">
@@ -841,6 +894,36 @@
         </select>
       </div>
       <div class="field"><label>P&amp;L (pips / $)</label><input id="e-pnl" type="number" step="any" placeholder="e.g. 50 or -30"></div>
+    </div>
+    <div class="field">
+      <label>Trading session</label>
+      <div class="session-grid" id="session-grid-edit">
+        <button type="button" class="session-btn" data-session="Asian" onclick="selectSession('edit','Asian')">
+          <div class="session-btn-top"><span class="session-icon">🌏</span><span class="session-btn-name">Asian</span></div>
+          <div class="session-btn-hours">00:00 – 09:00 UTC</div>
+        </button>
+        <button type="button" class="session-btn" data-session="Sydney" onclick="selectSession('edit','Sydney')">
+          <div class="session-btn-top"><span class="session-icon">🦘</span><span class="session-btn-name">Sydney</span></div>
+          <div class="session-btn-hours">21:00 – 06:00 UTC</div>
+        </button>
+        <button type="button" class="session-btn" data-session="London" onclick="selectSession('edit','London')">
+          <div class="session-btn-top"><span class="session-icon">🇬🇧</span><span class="session-btn-name">London</span></div>
+          <div class="session-btn-hours">08:00 – 17:00 UTC</div>
+        </button>
+        <button type="button" class="session-btn" data-session="New York" onclick="selectSession('edit','New York')">
+          <div class="session-btn-top"><span class="session-icon">🗽</span><span class="session-btn-name">New York</span></div>
+          <div class="session-btn-hours">13:00 – 22:00 UTC</div>
+        </button>
+        <button type="button" class="session-btn" data-session="London/NY" onclick="selectSession('edit','London/NY')">
+          <div class="session-btn-top"><span class="session-icon">⚡</span><span class="session-btn-name">London/NY</span></div>
+          <div class="session-btn-hours">13:00 – 17:00 UTC</div>
+        </button>
+        <button type="button" class="session-btn" data-session="Asian/London" onclick="selectSession('edit','Asian/London')">
+          <div class="session-btn-top"><span class="session-icon">🌅</span><span class="session-btn-name">Asian/London</span></div>
+          <div class="session-btn-hours">07:00 – 09:00 UTC</div>
+        </button>
+      </div>
+      <input type="hidden" id="e-session">
     </div>
     <div class="row2">
       <div class="field"><label>TP price</label><input id="e-tp" type="number" step="any" placeholder="0.00000"></div>
@@ -972,6 +1055,7 @@ function openAdd() {
   document.getElementById('preview-grid').innerHTML = '';
   document.getElementById('add-status').textContent = '';
   document.getElementById('save-btn').disabled = false;
+  setSession('add', '');
   document.getElementById('add-modal').classList.add('open');
 }
 
@@ -1002,6 +1086,7 @@ async function addTrade() {
       bos: document.getElementById('r-bos').checked,
       liq: document.getElementById('r-liq').checked,
       outcome: 'Pending',
+      session: document.getElementById('f-session').value || null,
       pnl: pnlRaw !== '' ? parseFloat(pnlRaw) : null,
       tp: null, sl: null,
       remarks: document.getElementById('f-remarks').value.trim(),
@@ -1037,6 +1122,7 @@ function openEdit(id) {
   // pre-fill pair display in edit summary (no pair selector in edit modal, pair is fixed)
   document.getElementById('edit-status').textContent = '';
   document.getElementById('edit-save-btn').disabled = false;
+  setSession('edit', t.session || '');
   editPendingFiles = [];
   document.getElementById('edit-preview-grid').innerHTML = '';
   const ei = document.getElementById('existing-images');
@@ -1067,6 +1153,7 @@ async function saveEdit() {
       tp: document.getElementById('e-tp').value ? parseFloat(document.getElementById('e-tp').value) : null,
       sl: document.getElementById('e-sl').value ? parseFloat(document.getElementById('e-sl').value) : null,
       pnl: pnlRaw !== '' ? parseFloat(pnlRaw) : null,
+      session: document.getElementById('e-session').value || null,
       remarks: document.getElementById('e-remarks').value.trim(),
       imageUrls: newUrls
     };
@@ -1315,6 +1402,9 @@ function tradeCardHtml(t) {
         ? `<div class="tc-img-count" onclick="openLightbox(${JSON.stringify(t.imageUrls)},0)">+${t.imageUrls.length - 4} more</div>`
         : ''}</div>` : '';
   const remarks = t.remarks ? `<div class="tc-remarks">${t.remarks}</div>` : '';
+  const sessionBadge = t.session
+    ? `<span class="badge ${SESSION_BADGE[t.session] || 'badge-pending'}">${SESSION_ICON[t.session] || ''} ${t.session}</span>`
+    : '';
 
   return `<div class="trade-card ${oc}">
     <div class="tc-top">
@@ -1323,6 +1413,7 @@ function tradeCardHtml(t) {
           <span class="badge badge-pair">${t.pair}</span>
           <span class="badge ${dirBadge}">${t.direction}</span>
           <span class="badge ${ocBadge}">${t.outcome}</span>
+          ${sessionBadge}
         </div>
         <div class="tc-date">${t.date}</div>
       </div>
@@ -1354,6 +1445,43 @@ document.querySelectorAll('.overlay').forEach(o => {
 });
 
 // ─────────────────────────────
+// Session selector
+// ─────────────────────────────
+const SESSION_BADGE = {
+  'Asian':        'badge-asian',
+  'Sydney':       'badge-sydney',
+  'London':       'badge-london',
+  'New York':     'badge-newyork',
+  'London/NY':    'badge-london-newyork',
+  'Asian/London': 'badge-asian-london',
+};
+const SESSION_ICON = {
+  'Asian':'🌏','Sydney':'🦘','London':'🇬🇧',
+  'New York':'🗽','London/NY':'⚡','Asian/London':'🌅'
+};
+function selectSession(modal, session) {
+  const gridId = 'session-grid-' + modal;
+  const hiddenId = modal === 'add' ? 'f-session' : 'e-session';
+  const current = document.getElementById(hiddenId).value;
+  if (current === session) {
+    document.getElementById(hiddenId).value = '';
+    document.querySelectorAll('#' + gridId + ' .session-btn').forEach(b => b.classList.remove('selected'));
+  } else {
+    document.getElementById(hiddenId).value = session;
+    document.querySelectorAll('#' + gridId + ' .session-btn').forEach(b => {
+      b.classList.toggle('selected', b.dataset.session === session);
+    });
+  }
+}
+function setSession(modal, session) {
+  const gridId = 'session-grid-' + modal;
+  const hiddenId = modal === 'add' ? 'f-session' : 'e-session';
+  document.getElementById(hiddenId).value = session || '';
+  document.querySelectorAll('#' + gridId + ' .session-btn').forEach(b => {
+    b.classList.toggle('selected', !!(session && b.dataset.session === session));
+  });
+}
+
 // Forex Pairs Data
 // ─────────────────────────────
 const FOREX_PAIRS = [
@@ -1626,6 +1754,7 @@ function reportCardHtml(t, tradeNum) {
         <span class="badge badge-pair">${t.pair}</span>
         <span class="badge ${dirBadge}">${t.direction}</span>
         <span class="badge ${ocBadge}">${t.outcome}</span>
+        ${t.session ? `<span class="badge ${SESSION_BADGE[t.session] || 'badge-pending'}">${SESSION_ICON[t.session] || ''} ${t.session}</span>` : ''}
       </div>
       <span style="font-size:12px;color:var(--muted);font-family:var(--mono)">${dateLabel}</span>
     </div>
@@ -1651,6 +1780,15 @@ function reportCardHtml(t, tradeNum) {
           <div class="rc-reasons-wrap">${reasonPills}</div>
           ${activeReasons.length ? `<div style="font-size:12px;color:var(--muted);margin-top:8px;line-height:1.7">${activeReasons.join(' · ')}</div>` : ''}
         </div>
+
+        <!-- Session -->
+        ${t.session ? `<div>
+          <div class="rc-section-label">Trading session</div>
+          <div style="display:flex;align-items:center;gap:10px;margin-top:4px">
+            <span style="font-size:22px">${SESSION_ICON[t.session] || ''}</span>
+            <span style="font-size:14px;font-weight:700;color:var(--text)">${t.session}</span>
+          </div>
+        </div>` : ''}
 
         <!-- Remarks -->
         ${t.remarks ? `<div>
