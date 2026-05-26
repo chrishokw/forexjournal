@@ -375,18 +375,16 @@
   .lightbox {
     display: none; position: fixed; inset: 0; z-index: 2000;
     background: rgba(0,0,0,0.97);
-    flex-direction: column;
-    align-items: center; justify-content: center;
     user-select: none;
   }
-  .lightbox.open { display: flex; }
+  .lightbox.open { display: block; }
 
   /* top bar */
   .lb-topbar {
     position: absolute; top: 0; left: 0; right: 0;
     height: 56px; display: flex; align-items: center; justify-content: space-between;
     padding: 0 20px;
-    background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%);
+    background: rgba(0,0,0,0.5);
     z-index: 10;
   }
   .lb-counter-pill {
@@ -403,61 +401,50 @@
     backdrop-filter: blur(6px); transition: background 0.15s;
   }
   .lb-close:hover { background: rgba(255,255,255,0.18); }
-  .lb-delete-btn {
-    display: none; align-items: center; gap: 5px;
-    padding: 6px 12px; border-radius: 99px;
-    background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.4);
-    color: #f87171; font-size: 12px; font-weight: 600;
-    cursor: pointer; backdrop-filter: blur(6px);
-    transition: background 0.15s; font-family: var(--sans);
-  }
-  .lb-delete-btn:hover { background: rgba(239,68,68,0.3); }
-  .lb-delete-btn.visible { display: flex; }
 
   /* image stage */
   .lb-stage {
-    flex: 1; display: flex; align-items: center; justify-content: center;
-    width: 100%; position: relative; overflow: hidden;
-    padding: 60px 80px;
+    position: absolute; inset: 56px 0 0 0;
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px 72px 90px;
+    overflow: hidden;
   }
   .lb-img-wrap {
     display: flex; align-items: center; justify-content: center;
     width: 100%; height: 100%;
-    position: relative;
   }
   .lb-img {
     max-width: 100%; max-height: 100%;
     object-fit: contain; border-radius: 6px;
     box-shadow: 0 8px 48px rgba(0,0,0,0.6);
-    transition: opacity 0.18s ease, transform 0.18s ease;
+    transition: transform 0.2s ease;
     cursor: zoom-in;
     transform-origin: center center;
+    display: block;
   }
   .lb-img.zoomed { cursor: zoom-out; }
-  .lb-img.fading { opacity: 0; transform: scale(0.96); }
 
   /* side arrow buttons */
   .lb-arrow {
     position: absolute; top: 50%; transform: translateY(-50%);
     width: 48px; height: 48px; border-radius: 50%;
-    background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.18);
-    color: #fff; font-size: 20px; cursor: pointer;
+    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+    color: #fff; font-size: 22px; cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    backdrop-filter: blur(6px); transition: background 0.15s, transform 0.15s;
-    z-index: 10;
+    z-index: 20; transition: background 0.15s;
   }
-  .lb-arrow:hover { background: rgba(255,255,255,0.2); transform: translateY(-50%) scale(1.08); }
-  .lb-arrow.lb-prev { left: 16px; }
-  .lb-arrow.lb-next { right: 16px; }
-  .lb-arrow:disabled { opacity: 0.2; cursor: default; }
-  .lb-arrow:disabled:hover { transform: translateY(-50%) scale(1); background: rgba(255,255,255,0.08); }
+  .lb-arrow:hover { background: rgba(255,255,255,0.25); }
+  .lb-arrow.lb-prev { left: 12px; }
+  .lb-arrow.lb-next { right: 12px; }
+  .lb-arrow:disabled { opacity: 0.15; pointer-events: none; }
 
   /* bottom thumbnail strip */
   .lb-strip-wrap {
     position: absolute; bottom: 0; left: 0; right: 0;
-    background: linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%);
-    padding: 16px 20px 20px;
+    background: rgba(0,0,0,0.6);
+    padding: 10px 20px 14px;
     display: flex; justify-content: center;
+    z-index: 10;
   }
   .lb-strip {
     display: flex; gap: 6px; align-items: center;
@@ -777,12 +764,12 @@
 ════════════════════════════════════════════ -->
 <script>
   const FIREBASE_CONFIG = {
-   apiKey: "AIzaSyA7PsEhoP9g2TNBxB3Qh_MFg62bhRCaoQ8",
-  authDomain: "forexjournalstorage.firebaseapp.com",
-  projectId: "forexjournalstorage",
-  storageBucket: "forexjournalstorage.firebasestorage.app",
-  messagingSenderId: "985731404823",
-  appId: "1:985731404823:web:5fa8d9d502d24b9c1af852"
+    apiKey:            "YOUR_API_KEY",
+    authDomain:        "YOUR_PROJECT_ID.firebaseapp.com",
+    projectId:         "YOUR_PROJECT_ID",
+    storageBucket:     "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId:             "YOUR_APP_ID"
   };
 </script>
 <!-- ════════════════════════════════════════ -->
@@ -1081,8 +1068,8 @@
   <!-- Top bar -->
   <div class="lb-topbar">
     <div class="lb-counter-pill" id="lb-counter">1 image</div>
-    <div style="display:flex;align-items:center;gap:10px">
-      <div id="lb-hint-inline" style="font-size:11px;color:rgba(255,255,255,0.4);font-family:var(--mono)">click to zoom</div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <span style="font-size:11px;color:rgba(255,255,255,0.35);font-family:var(--mono)">click image to zoom · esc to close</span>
       <button class="lb-close" onclick="closeLightbox()" title="Close (Esc)">✕</button>
     </div>
   </div>
@@ -1463,26 +1450,20 @@ function addPreviews(files, gridId, arr) {
 // ─── Lightbox ───
 let lbZoomed = false;
 let lbTouchStartX = 0;
-let lbTradeId = null;
-let lbEditable = false;
 
-function openLightbox(images, idx, tradeId) {
+function openLightbox(images, idx) {
   if (!images || !images.length) return;
   lbImages = Array.isArray(images) ? images : [images];
   lbIdx = Math.max(0, Math.min(idx || 0, lbImages.length - 1));
   lbZoomed = false;
-  lbTradeId = tradeId || null;
-  lbEditable = !!tradeId && fbReady;
 
   // Reset image element
   const img = document.getElementById('lb-img');
-  img.classList.remove('zoomed','fading');
+  img.classList.remove('zoomed');
   img.style.transform = '';
   img.style.transformOrigin = 'center center';
 
-  // Show the lightbox (simple display:flex — no transition trick)
   document.getElementById('lightbox').classList.add('open');
-
   lbRenderStrip();
   lbShowImg();
 }
@@ -1709,9 +1690,9 @@ function tradeCardHtml(t) {
     : '';
   const imgs = t.imageUrls && t.imageUrls.length
     ? `<div class="tc-images">${t.imageUrls.slice(0,4).map((u,i) =>
-        `<img class="tc-thumb" src="${u}" alt="screenshot" onclick="openLightbox(${JSON.stringify(t.imageUrls)},${i},'${t.id}')">`
+        `<img class="tc-thumb" src="${u}" alt="screenshot" onclick="openLightbox(${JSON.stringify(t.imageUrls)},${i})">`
       ).join('')}${t.imageUrls.length > 4
-        ? `<div class="tc-img-count" onclick="openLightbox(${JSON.stringify(t.imageUrls)},0,'${t.id}')">+${t.imageUrls.length - 4} more</div>`
+        ? `<div class="tc-img-count" onclick="openLightbox(${JSON.stringify(t.imageUrls)},0)">+${t.imageUrls.length - 4} more</div>`
         : ''}</div>` : '';
   const remarks = t.remarks ? `<div class="tc-remarks">${t.remarks}</div>` : '';
   const sessionBadge = t.session
@@ -2043,7 +2024,7 @@ function reportCardHtml(t, tradeNum) {
       : '';
 
     imagesColHtml = `
-      <div class="rc-main-img-wrap" onclick="openLightbox(${JSON.stringify(imgs)}, ${activeIdx}, '${t.id}')" id="rc-main-wrap-${t.id}">
+      <div class="rc-main-img-wrap" onclick="openLightbox(${JSON.stringify(imgs)}, ${activeIdx})" id="rc-main-wrap-${t.id}">
         <img class="rc-main-img" id="rc-main-img-${t.id}" src="${imgs[activeIdx]}" alt="Trade screenshot">
         <div class="rc-img-overlay"><div class="rc-img-overlay-icon">⤢</div></div>
         ${countBadge}
@@ -2114,7 +2095,7 @@ function reportCardHtml(t, tradeNum) {
     <!-- Footer -->
     <div class="rc-footer">
       <button class="btn btn-sm" onclick="openEdit('${t.id}')">✏ Edit trade</button>
-      ${imgs.length ? `<button class="btn btn-sm" onclick="openLightbox(${JSON.stringify(imgs)}, 0, '${t.id}')">🔍 View all images (${imgs.length})</button>` : ''}
+      ${imgs.length ? `<button class="btn btn-sm" onclick="openLightbox(${JSON.stringify(imgs)}, 0)">🔍 View all images (${imgs.length})</button>` : ''}
     </div>
   </div>`;
 }
@@ -2139,7 +2120,7 @@ function reportSwitchImg(tradeId, idx) {
 
   // Update main wrap onclick for lightbox
   const mainWrap = document.getElementById(`rc-main-wrap-${tradeId}`);
-  if (mainWrap) mainWrap.onclick = () => openLightbox(t.imageUrls, idx, t.id);
+  if (mainWrap) mainWrap.onclick = () => openLightbox(t.imageUrls, idx);
 
   // Update count badge
   const countBadge = mainWrap && mainWrap.querySelector('.rc-img-count-badge');
