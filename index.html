@@ -405,6 +405,16 @@
     backdrop-filter: blur(6px); transition: background 0.15s;
   }
   .lb-close:hover { background: rgba(255,255,255,0.18); }
+  .lb-delete-btn {
+    display: none; align-items: center; gap: 5px;
+    padding: 6px 12px; border-radius: 99px;
+    background: rgba(239,68,68,0.15); border: 1px solid rgba(239,68,68,0.4);
+    color: #f87171; font-size: 12px; font-weight: 600;
+    cursor: pointer; backdrop-filter: blur(6px);
+    transition: background 0.15s; font-family: var(--sans);
+  }
+  .lb-delete-btn:hover { background: rgba(239,68,68,0.3); }
+  .lb-delete-btn.visible { display: flex; }
 
   /* image stage */
   .lb-stage {
@@ -743,12 +753,12 @@
 ════════════════════════════════════════════ -->
 <script>
   const FIREBASE_CONFIG = {
- apiKey: "AIzaSyA7PsEhoP9g2TNBxB3Qh_MFg62bhRCaoQ8",
-  authDomain: "forexjournalstorage.firebaseapp.com",
-  projectId: "forexjournalstorage",
-  storageBucket: "forexjournalstorage.firebasestorage.app",
-  messagingSenderId: "985731404823",
-  appId: "1:985731404823:web:5fa8d9d502d24b9c1af852"
+    apiKey:            "YOUR_API_KEY",
+    authDomain:        "YOUR_PROJECT_ID.firebaseapp.com",
+    projectId:         "YOUR_PROJECT_ID",
+    storageBucket:     "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId:             "YOUR_APP_ID"
   };
 </script>
 <!-- ════════════════════════════════════════ -->
@@ -1047,7 +1057,10 @@
   <!-- Top bar -->
   <div class="lb-topbar">
     <div class="lb-counter-pill" id="lb-counter">1 / 1</div>
-    <button class="lb-close" onclick="closeLightbox()" title="Close (Esc)">✕</button>
+    <div style="display:flex;align-items:center;gap:8px">
+      <button class="lb-delete-btn" id="lb-delete-btn" onclick="lbDeleteImage()" title="Delete this image">🗑 Delete</button>
+      <button class="lb-close" onclick="closeLightbox()" title="Close (Esc)">✕</button>
+    </div>
   </div>
 
   <!-- Stage -->
@@ -1059,7 +1072,7 @@
         draggable="false">
     </div>
     <button class="lb-arrow lb-next" id="lb-next" onclick="lbNext()" title="Next (→)">&#8594;</button>
-    <div class="lb-hint" id="lb-hint">Click image to zoom</div>
+    <div class="lb-hint" id="lb-hint">Click image to zoom · ← → keys to navigate</div>
   </div>
 
   <!-- Thumbnail strip -->
@@ -1234,7 +1247,7 @@ function openEdit(id) {
   if (t.imageUrls && t.imageUrls.length) {
     ei.innerHTML = `<div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Existing screenshots</div>
     <div class="tc-images">${t.imageUrls.map((u,i) =>
-      `<img class="tc-thumb" src="${u}" alt="screenshot" onclick="openLightbox(${JSON.stringify(t.imageUrls)},${i})">`
+      `<img class="tc-thumb" src="${u}" alt="screenshot" onclick="openLightbox(${JSON.stringify(t.imageUrls)},${i},'${t.id}')">`
     ).join('')}</div>`;
   } else { ei.innerHTML = ''; }
   document.getElementById('edit-modal').classList.add('open');
@@ -1434,47 +1447,62 @@ function addPreviews(files, gridId, arr) {
 let lbZoomed = false;
 let lbHintTimer = null;
 let lbTouchStartX = 0;
+let lbTradeId = null;       // trade whose images are open
+let lbEditable = false;     // whether delete is allowed
 
-function openLightbox(images, idx) {
+function openLightbox(images, idx, tradeId) {
   if (!images || !images.length) return;
   lbImages = Array.isArray(images) ? images : [images];
-  lbIdx = Math.max(0, Math.min(idx, lbImages.length - 1));
+  lbIdx = Math.max(0, Math.min(idx || 0, lbImages.length - 1));
   lbZoomed = false;
+  lbTradeId = tradeId || null;
+  lbEditable = !!tradeId && fbReady;
+
+  // Show/hide delete button
+  const delBtn = document.getElementById('lb-delete-btn');
+  delBtn.classList.toggle('visible', lbEditable);
+
   const lb = document.getElementById('lightbox');
   lb.classList.add('open');
-  requestAnimationFrame(() => lb.classList.add('visible'));
+  // Double rAF ensures transition fires after display:flex kicks in
+  requestAnimationFrame(() => requestAnimationFrame(() => lb.classList.add('visible')));
   lbRenderStrip();
   lbShowImg(false);
-  // Show zoom hint briefly
-  if (lbImages.length > 0) {
-    const hint = document.getElementById('lb-hint');
-    hint.classList.add('show');
-    clearTimeout(lbHintTimer);
-    lbHintTimer = setTimeout(() => hint.classList.remove('show'), 2500);
-  }
+
+  // Show hint briefly
+  const hint = document.getElementById('lb-hint');
+  hint.classList.add('show');
+  clearTimeout(lbHintTimer);
+  lbHintTimer = setTimeout(() => hint.classList.remove('show'), 2800);
 }
 
 function closeLightbox() {
   const lb = document.getElementById('lightbox');
   lb.classList.remove('visible');
-  setTimeout(() => lb.classList.remove('open'), 200);
-  lbZoomed = false;
-  const img = document.getElementById('lb-img');
-  img.classList.remove('zoomed');
-  img.style.transform = '';
+  setTimeout(() => {
+    lb.classList.remove('open');
+    // Reset zoom
+    const img = document.getElementById('lb-img');
+    img.classList.remove('zoomed');
+    img.style.transform = '';
+    img.style.transformOrigin = 'center center';
+    lbZoomed = false;
+  }, 220);
 }
 
 function lbShowImg(animate) {
-  const img = document.getElementById('lb-img');
+  const img    = document.getElementById('lb-img');
   const counter = document.getElementById('lb-counter');
   const prevBtn = document.getElementById('lb-prev');
   const nextBtn = document.getElementById('lb-next');
   const stripWrap = document.getElementById('lb-strip-wrap');
+  const multi = lbImages.length > 1;
 
-  // Reset zoom
+  // Reset zoom on every slide change
   lbZoomed = false;
   img.classList.remove('zoomed');
   img.style.transform = '';
+  img.style.transformOrigin = 'center center';
 
   if (animate) {
     img.classList.add('fading');
@@ -1486,27 +1514,33 @@ function lbShowImg(animate) {
     img.src = lbImages[lbIdx];
   }
 
-  counter.textContent = lbImages.length > 1 ? `${lbIdx + 1} / ${lbImages.length}` : lbImages[lbIdx].split('/').pop().split('?')[0].slice(-20) || 'Image';
-  prevBtn.disabled = lbIdx === 0;
-  nextBtn.disabled = lbIdx === lbImages.length - 1;
+  // Counter: "2 / 5" for multi, "1 image" for single
+  counter.textContent = multi ? `${lbIdx + 1} / ${lbImages.length}` : '1 image';
 
-  // Hide strip and arrows for single image
-  stripWrap.style.display = lbImages.length > 1 ? '' : 'none';
-  prevBtn.style.display = lbImages.length > 1 ? '' : 'none';
-  nextBtn.style.display = lbImages.length > 1 ? '' : 'none';
+  // Arrows: show for multi, hide for single
+  prevBtn.style.display = multi ? 'flex' : 'none';
+  nextBtn.style.display = multi ? 'flex' : 'none';
+  if (multi) {
+    prevBtn.disabled = lbIdx === 0;
+    nextBtn.disabled = lbIdx === lbImages.length - 1;
+  }
 
-  // Update strip active state
-  document.querySelectorAll('.lb-strip-thumb').forEach((t, i) => {
-    t.classList.toggle('active', i === lbIdx);
-    if (i === lbIdx) t.scrollIntoView({ inline: 'center', behavior: 'smooth', block: 'nearest' });
+  // Thumbnail strip: show for multi, hide for single
+  stripWrap.style.display = multi ? '' : 'none';
+
+  // Sync active thumb
+  document.querySelectorAll('.lb-strip-thumb').forEach((th, i) => {
+    th.classList.toggle('active', i === lbIdx);
+    if (i === lbIdx) th.scrollIntoView({ inline: 'center', behavior: 'smooth', block: 'nearest' });
   });
 }
 
 function lbRenderStrip() {
   const strip = document.getElementById('lb-strip');
+  if (lbImages.length <= 1) { strip.innerHTML = ''; return; }
   strip.innerHTML = lbImages.map((url, i) =>
     `<img class="lb-strip-thumb ${i === lbIdx ? 'active' : ''}"
-      src="${url}" alt="thumb ${i+1}"
+      src="${url}" alt="thumb ${i + 1}"
       onclick="lbGoto(${i})">`
   ).join('');
 }
@@ -1515,7 +1549,6 @@ function lbGoto(idx) {
   if (idx === lbIdx) return;
   lbIdx = idx;
   lbShowImg(true);
-  document.querySelectorAll('.lb-strip-thumb').forEach((t, i) => t.classList.toggle('active', i === idx));
 }
 
 function lbNext() {
@@ -1527,28 +1560,79 @@ function lbPrev() {
 }
 
 function lbToggleZoom(e) {
-  const img = document.getElementById('lb-img');
-  if (!lbZoomed) {
-    // Zoom into click position
-    const rect = img.getBoundingClientRect();
-    const ox = ((e.clientX - rect.left) / rect.width  - 0.5) * 100;
-    const oy = ((e.clientY - rect.top)  / rect.height - 0.5) * 100;
-    img.style.transformOrigin = `${50 + ox}% ${50 + oy}%`;
-    img.style.transform = 'scale(2.5)';
-    img.classList.add('zoomed');
-    lbZoomed = true;
-  } else {
+  // Don't zoom if user is swiping / dragging
+  if (lbZoomed) {
+    const img = document.getElementById('lb-img');
     img.style.transform = '';
     img.style.transformOrigin = 'center center';
     img.classList.remove('zoomed');
     lbZoomed = false;
+  } else {
+    const img = document.getElementById('lb-img');
+    const rect = img.getBoundingClientRect();
+    const ox = ((e.clientX - rect.left) / rect.width  - 0.5) * 100;
+    const oy = ((e.clientY - rect.top)  / rect.height - 0.5) * 100;
+    img.style.transformOrigin = `${50 + ox}% ${50 + oy}%`;
+    img.style.transform = 'scale(2.8)';
+    img.classList.add('zoomed');
+    lbZoomed = true;
   }
 }
 
-// Close on backdrop click (not on image/controls)
+async function lbDeleteImage() {
+  if (!lbEditable || !lbTradeId) return;
+  const urlToDelete = lbImages[lbIdx];
+  if (!confirm(`Delete this screenshot? This cannot be undone.`)) return;
+
+  const t = trades.find(x => x.id === lbTradeId);
+  if (!t) return;
+
+  try {
+    // Remove from Firestore imageUrls array
+    const newUrls = (t.imageUrls || []).filter(u => u !== urlToDelete);
+    await db.collection('trades').doc(lbTradeId).update({ imageUrls: newUrls });
+    t.imageUrls = newUrls;
+
+    // Try to delete from Storage (non-fatal if it fails)
+    try { await firebase.storage().refFromURL(urlToDelete).delete(); } catch(_) {}
+
+    // Refresh renders
+    renderTrades(trades);
+    if (document.getElementById('tab-report').classList.contains('active')) renderReport();
+    if (document.getElementById('tab-calendar').classList.contains('active')) renderCalendar();
+
+    // Update lightbox in-place
+    lbImages = newUrls;
+    if (lbImages.length === 0) {
+      closeLightbox();
+      return;
+    }
+    // Adjust index if we deleted the last image
+    if (lbIdx >= lbImages.length) lbIdx = lbImages.length - 1;
+
+    // Re-open with same trade so delete stays available
+    const delBtn = document.getElementById('lb-delete-btn');
+    delBtn.classList.toggle('visible', lbImages.length > 0);
+    lbRenderStrip();
+    lbShowImg(false);
+  } catch(err) {
+    alert('Failed to delete image: ' + err.message);
+  }
+}
+
+// Close on backdrop click (not on image or controls)
 document.getElementById('lightbox').addEventListener('click', function(e) {
   if (e.target === this || e.target.id === 'lb-stage' || e.target.id === 'lb-img-wrap') {
-    closeLightbox();
+    if (lbZoomed) {
+      // First click when zoomed: unzoom, don't close
+      const img = document.getElementById('lb-img');
+      img.style.transform = '';
+      img.style.transformOrigin = 'center center';
+      img.classList.remove('zoomed');
+      lbZoomed = false;
+    } else {
+      closeLightbox();
+    }
   }
 });
 
@@ -1558,8 +1642,8 @@ document.addEventListener('keydown', function(e) {
   if (!lb.classList.contains('open')) return;
   if (e.key === 'ArrowRight' || e.key === 'ArrowDown') { e.preventDefault(); lbNext(); }
   else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); lbPrev(); }
-  else if (e.key === 'Escape') closeLightbox();
-  else if (e.key === ' ') { e.preventDefault(); lbNext(); }
+  else if (e.key === 'Escape') { e.preventDefault(); closeLightbox(); }
+  else if (e.key === 'Delete') { e.preventDefault(); lbDeleteImage(); }
 });
 
 // Touch swipe
@@ -1568,7 +1652,7 @@ document.getElementById('lightbox').addEventListener('touchstart', e => {
 }, { passive: true });
 document.getElementById('lightbox').addEventListener('touchend', e => {
   const dx = e.changedTouches[0].clientX - lbTouchStartX;
-  if (Math.abs(dx) > 50) { dx < 0 ? lbNext() : lbPrev(); }
+  if (Math.abs(dx) > 48) { dx < 0 ? lbNext() : lbPrev(); }
 });
 
 // ─────────────────────────────
@@ -1634,9 +1718,9 @@ function tradeCardHtml(t) {
     : '';
   const imgs = t.imageUrls && t.imageUrls.length
     ? `<div class="tc-images">${t.imageUrls.slice(0,4).map((u,i) =>
-        `<img class="tc-thumb" src="${u}" alt="screenshot" onclick="openLightbox(${JSON.stringify(t.imageUrls)},${i})">`
+        `<img class="tc-thumb" src="${u}" alt="screenshot" onclick="openLightbox(${JSON.stringify(t.imageUrls)},${i},'${t.id}')">`
       ).join('')}${t.imageUrls.length > 4
-        ? `<div class="tc-img-count" onclick="openLightbox(${JSON.stringify(t.imageUrls)},0)">+${t.imageUrls.length - 4} more</div>`
+        ? `<div class="tc-img-count" onclick="openLightbox(${JSON.stringify(t.imageUrls)},0,'${t.id}')">+${t.imageUrls.length - 4} more</div>`
         : ''}</div>` : '';
   const remarks = t.remarks ? `<div class="tc-remarks">${t.remarks}</div>` : '';
   const sessionBadge = t.session
@@ -1968,7 +2052,7 @@ function reportCardHtml(t, tradeNum) {
       : '';
 
     imagesColHtml = `
-      <div class="rc-main-img-wrap" onclick="openLightbox(${JSON.stringify(imgs)}, ${activeIdx})" id="rc-main-wrap-${t.id}">
+      <div class="rc-main-img-wrap" onclick="openLightbox(${JSON.stringify(imgs)}, ${activeIdx}, '${t.id}')" id="rc-main-wrap-${t.id}">
         <img class="rc-main-img" id="rc-main-img-${t.id}" src="${imgs[activeIdx]}" alt="Trade screenshot">
         <div class="rc-img-overlay"><div class="rc-img-overlay-icon">⤢</div></div>
         ${countBadge}
@@ -2039,7 +2123,7 @@ function reportCardHtml(t, tradeNum) {
     <!-- Footer -->
     <div class="rc-footer">
       <button class="btn btn-sm" onclick="openEdit('${t.id}')">✏ Edit trade</button>
-      ${imgs.length ? `<button class="btn btn-sm" onclick="openLightbox(${JSON.stringify(imgs)}, 0)">🔍 View all images (${imgs.length})</button>` : ''}
+      ${imgs.length ? `<button class="btn btn-sm" onclick="openLightbox(${JSON.stringify(imgs)}, 0, '${t.id}')">🔍 View all images (${imgs.length})</button>` : ''}
     </div>
   </div>`;
 }
@@ -2064,7 +2148,7 @@ function reportSwitchImg(tradeId, idx) {
 
   // Update main wrap onclick for lightbox
   const mainWrap = document.getElementById(`rc-main-wrap-${tradeId}`);
-  if (mainWrap) mainWrap.onclick = () => openLightbox(t.imageUrls, idx);
+  if (mainWrap) mainWrap.onclick = () => openLightbox(t.imageUrls, idx, t.id);
 
   // Update count badge
   const countBadge = mainWrap && mainWrap.querySelector('.rc-img-count-badge');
