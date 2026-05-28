@@ -821,6 +821,42 @@
 
   /* wider modal for two-section layout */
   .modal-wide { width: min(680px, 100%); }
+
+  /* ── Timestamp fields ── */
+  .ts-row {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--bg3); border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 7px 12px;
+    margin-top: 8px;
+  }
+  .ts-icon { font-size: 14px; flex-shrink: 0; }
+  .ts-label { font-size: 11px; color: var(--muted); font-weight: 600;
+    text-transform: uppercase; letter-spacing: .06em; flex-shrink: 0; }
+  .ts-inputs { display: flex; gap: 6px; flex: 1; }
+  .ts-input {
+    background: var(--bg2); border: 1px solid var(--border2);
+    border-radius: var(--radius-sm); color: var(--text);
+    font-family: var(--mono); font-size: 12px;
+    padding: 4px 8px; flex: 1; min-width: 0;
+  }
+  .ts-input:focus { outline: none; border-color: var(--accent); }
+  .ts-now-btn {
+    background: var(--accent-bg); border: 1px solid var(--accent);
+    color: var(--accent); border-radius: var(--radius-sm);
+    font-size: 11px; font-weight: 700; padding: 4px 10px;
+    cursor: pointer; white-space: nowrap; flex-shrink: 0;
+    font-family: var(--sans); transition: background .15s;
+  }
+  .ts-now-btn:hover { background: rgba(129,140,248,.2); }
+
+  /* timestamp display in trade card */
+  .ts-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 10px; font-family: var(--mono);
+    color: var(--muted); background: var(--bg3);
+    border: 1px solid var(--border); border-radius: 4px;
+    padding: 2px 7px;
+  }
 </style>
 </head>
 <body>
@@ -831,12 +867,12 @@
 ════════════════════════════════════════════ -->
 <script>
   const FIREBASE_CONFIG = {
-     apiKey: "AIzaSyA7PsEhoP9g2TNBxB3Qh_MFg62bhRCaoQ8",
-  authDomain: "forexjournalstorage.firebaseapp.com",
-  projectId: "forexjournalstorage",
-  storageBucket: "forexjournalstorage.firebasestorage.app",
-  messagingSenderId: "985731404823",
-  appId: "1:985731404823:web:5fa8d9d502d24b9c1af852"
+    apiKey:            "YOUR_API_KEY",
+    authDomain:        "YOUR_PROJECT_ID.firebaseapp.com",
+    projectId:         "YOUR_PROJECT_ID",
+    storageBucket:     "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId:             "YOUR_APP_ID"
   };
 </script>
 <!-- ════════════════════════════════════════ -->
@@ -991,7 +1027,7 @@
           </div>
         </div>
 
-        <!-- Entry + Date -->
+        <!-- Entry + Date + Pre timestamp -->
         <div class="row2">
           <div class="field" style="margin-bottom:0">
             <label>Entry price</label>
@@ -1001,6 +1037,14 @@
             <label>Date</label>
             <input id="f-date" type="date">
           </div>
+        </div>
+        <div class="ts-row">
+          <span class="ts-icon">🕐</span>
+          <span class="ts-label">Pre-analysis time</span>
+          <div class="ts-inputs">
+            <input class="ts-input" id="f-pretime" type="time" placeholder="HH:MM">
+          </div>
+          <button type="button" class="ts-now-btn" onclick="stampNow('f-pretime')">Now</button>
         </div>
 
         <!-- Session -->
@@ -1156,6 +1200,16 @@
           <input type="hidden" id="f-outcome" value="Pending">
         </div>
 
+        <!-- Post timestamp -->
+        <div class="ts-row">
+          <span class="ts-icon">🕐</span>
+          <span class="ts-label">Post-analysis time</span>
+          <div class="ts-inputs">
+            <input class="ts-input" id="f-posttime" type="time" placeholder="HH:MM">
+          </div>
+          <button type="button" class="ts-now-btn" onclick="stampNow('f-posttime')">Now</button>
+        </div>
+
         <!-- TP / SL / P&L -->
         <div class="row3">
           <div class="field" style="margin-bottom:0">
@@ -1255,6 +1309,16 @@
           </div>
         </div>
 
+        <!-- Pre timestamp -->
+        <div class="ts-row">
+          <span class="ts-icon">🕐</span>
+          <span class="ts-label">Pre-analysis time</span>
+          <div class="ts-inputs">
+            <input class="ts-input" id="e-pretime" type="time" placeholder="HH:MM">
+          </div>
+          <button type="button" class="ts-now-btn" onclick="stampNow('e-pretime')">Now</button>
+        </div>
+
         <!-- Session -->
         <div class="field" style="margin-bottom:0">
           <label>Trading session</label>
@@ -1337,6 +1401,16 @@
             </div>
           </div>
           <input type="hidden" id="e-outcome" value="Pending">
+        </div>
+
+        <!-- Post timestamp -->
+        <div class="ts-row">
+          <span class="ts-icon">🕐</span>
+          <span class="ts-label">Post-analysis time</span>
+          <div class="ts-inputs">
+            <input class="ts-input" id="e-posttime" type="time" placeholder="HH:MM">
+          </div>
+          <button type="button" class="ts-now-btn" onclick="stampNow('e-posttime')">Now</button>
         </div>
 
         <div class="row3">
@@ -1489,6 +1563,8 @@ function openAdd() {
   document.getElementById('preview-grid').innerHTML = '';
   document.getElementById('add-status').textContent = '';
   document.getElementById('save-btn').disabled = false;
+  document.getElementById('f-pretime').value = '';
+  document.getElementById('f-posttime').value = '';
   setSession('add', '');
   clearAnalysis();
   selectOutcome('Pending');
@@ -1524,11 +1600,13 @@ async function addTrade() {
       liqswept: document.getElementById('f-liqswept').value || null,
       fvgob:    document.getElementById('f-fvgob').value    || null,
       bos:      document.getElementById('f-bos').value      || null,
+      pretime:  document.getElementById('f-pretime').value  || null,
       prenotes: document.getElementById('f-prenotes').value.trim() || null,
       outcome:  document.getElementById('f-outcome').value || 'Pending',
       tp:  document.getElementById('f-tp').value  ? parseFloat(document.getElementById('f-tp').value)  : null,
       sl:  document.getElementById('f-sl').value  ? parseFloat(document.getElementById('f-sl').value)  : null,
       pnl: pnlRaw !== '' ? parseFloat(pnlRaw) : null,
+      posttime: document.getElementById('f-posttime').value || null,
       remarks: document.getElementById('f-remarks').value.trim() || null,
       imageUrls,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -1560,6 +1638,8 @@ function openEdit(id) {
   document.getElementById('e-pnl').value = t.pnl != null ? t.pnl : '';
   document.getElementById('e-remarks').value = t.remarks || '';
   document.getElementById('e-prenotes').value = t.prenotes || '';
+  document.getElementById('e-pretime').value  = t.pretime  || '';
+  document.getElementById('e-posttime').value = t.posttime || '';
   document.getElementById('edit-status').textContent = '';
   document.getElementById('edit-save-btn').disabled = false;
   setSession('edit', t.session || '');
@@ -1595,6 +1675,8 @@ async function saveEdit() {
       liqswept: document.getElementById('e-liqswept').value || null,
       fvgob:    document.getElementById('e-fvgob').value    || null,
       bos:      document.getElementById('e-bos').value      || null,
+      pretime:  document.getElementById('e-pretime').value  || null,
+      posttime: document.getElementById('e-posttime').value || null,
       prenotes: document.getElementById('e-prenotes').value.trim() || null,
       remarks:  document.getElementById('e-remarks').value.trim() || null,
       imageUrls: newUrls
@@ -2012,6 +2094,21 @@ function selectOutcomeEdit(val) {
 }
 
 // ─────────────────────────────
+// Timestamp helpers
+// ─────────────────────────────
+function stampNow(fieldId) {
+  const now = new Date();
+  const hh  = String(now.getHours()).padStart(2,'0');
+  const mm  = String(now.getMinutes()).padStart(2,'0');
+  document.getElementById(fieldId).value = hh + ':' + mm;
+}
+
+function nowTimeStr() {
+  const now = new Date();
+  return String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+}
+
+// ─────────────────────────────
 // UI helpers
 // ─────────────────────────────
 function toggleCheck(el, cbId) {
@@ -2099,7 +2196,11 @@ function tradeCardHtml(t) {
           <span class="badge ${ocBadge}">${t.outcome}</span>
           ${sessionBadge}
         </div>
-        <div class="tc-date">${t.date}</div>
+        <div class="tc-date">
+          ${t.date}
+          ${t.pretime  ? `<span class="ts-badge" style="margin-left:6px">🔍 ${t.pretime}</span>`  : ''}
+          ${t.posttime ? `<span class="ts-badge" style="margin-left:4px">📊 ${t.posttime}</span>` : ''}
+        </div>
       </div>
       <button class="btn btn-sm" onclick="openEdit('${t.id}')">✏ Edit</button>
     </div>
@@ -2442,7 +2543,13 @@ function reportCardHtml(t, tradeNum) {
         <span class="badge ${ocBadge}">${t.outcome}</span>
         ${t.session ? `<span class="badge ${SESSION_BADGE[t.session] || 'badge-pending'}">${SESSION_ICON[t.session] || ''} ${t.session}</span>` : ''}
       </div>
-      <span style="font-size:12px;color:var(--muted);font-family:var(--mono)">${dateLabel}</span>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+        <span style="font-size:12px;color:var(--muted);font-family:var(--mono)">${dateLabel}</span>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">
+          ${t.pretime  ? `<span class="ts-badge">🔍 Pre: ${t.pretime}</span>`  : ''}
+          ${t.posttime ? `<span class="ts-badge">📊 Post: ${t.posttime}</span>` : ''}
+        </div>
+      </div>
     </div>
 
     <!-- Two-column body -->
