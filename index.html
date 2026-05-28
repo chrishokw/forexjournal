@@ -754,6 +754,73 @@
     .cal-cell { min-height: 72px; padding: 5px; }
     .cal-pnl { font-size: 10px; }
   }
+
+  /* ── Modal sections ── */
+  .modal-section {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 1.25rem;
+    overflow: hidden;
+  }
+  .modal-section-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px;
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+  }
+  .modal-section-icon { font-size: 16px; }
+  .modal-section-title {
+    font-size: 12px; font-weight: 700;
+    letter-spacing: 0.07em; text-transform: uppercase;
+    color: var(--text);
+  }
+  .modal-section-subtitle {
+    font-size: 11px; color: var(--muted); margin-left: auto;
+  }
+  .modal-section-body { padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+
+  /* ── Analysis checklist (Yes/No / Bullish/Bearish toggle pairs) ── */
+  .analysis-item {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px;
+  }
+  .analysis-question {
+    font-size: 13px; color: var(--text); flex: 1; line-height: 1.4;
+  }
+  .analysis-question em { color: var(--muted); font-style: normal; font-size: 11px; display: block; margin-top: 1px; }
+  .toggle-group { display: flex; gap: 4px; flex-shrink: 0; }
+  .toggle-opt {
+    padding: 5px 13px; border-radius: 99px;
+    border: 1px solid var(--border2); background: var(--bg3);
+    color: var(--muted); font-size: 12px; font-weight: 600;
+    cursor: pointer; transition: all 0.15s; white-space: nowrap;
+    font-family: var(--sans);
+  }
+  .toggle-opt:hover { border-color: var(--border2); color: var(--text); }
+  .toggle-opt.sel-bullish  { background: var(--green-bg);  border-color: var(--green-border);  color: var(--green); }
+  .toggle-opt.sel-bearish  { background: var(--red-bg);    border-color: var(--red-border);    color: var(--red); }
+  .toggle-opt.sel-yes      { background: var(--green-bg);  border-color: var(--green-border);  color: var(--green); }
+  .toggle-opt.sel-no       { background: var(--red-bg);    border-color: var(--red-border);    color: var(--red); }
+
+  /* ── Post-analysis outcome toggle ── */
+  .outcome-toggle { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .outcome-opt {
+    padding: 12px 8px; border-radius: var(--radius-sm);
+    border: 1px solid var(--border); background: var(--bg3);
+    cursor: pointer; text-align: center; transition: all 0.15s;
+  }
+  .outcome-opt:hover { border-color: var(--border2); }
+  .outcome-opt-icon { font-size: 22px; display: block; margin-bottom: 4px; }
+  .outcome-opt-label { font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+  .outcome-opt.sel-pending { border-color: var(--amber-border); background: var(--amber-bg); }
+  .outcome-opt.sel-pending .outcome-opt-label { color: var(--amber); }
+  .outcome-opt.sel-tp { border-color: var(--green-border); background: var(--green-bg); }
+  .outcome-opt.sel-tp .outcome-opt-label { color: var(--green); }
+  .outcome-opt.sel-sl { border-color: var(--red-border); background: var(--red-bg); }
+  .outcome-opt.sel-sl .outcome-opt-label { color: var(--red); }
+
+  /* wider modal for two-section layout */
+  .modal-wide { width: min(680px, 100%); }
 </style>
 </head>
 <body>
@@ -764,12 +831,12 @@
 ════════════════════════════════════════════ -->
 <script>
   const FIREBASE_CONFIG = {
-    apiKey: "AIzaSyA7PsEhoP9g2TNBxB3Qh_MFg62bhRCaoQ8",
-  authDomain: "forexjournalstorage.firebaseapp.com",
-  projectId: "forexjournalstorage",
-  storageBucket: "forexjournalstorage.firebasestorage.app",
-  messagingSenderId: "985731404823",
-  appId: "1:985731404823:web:5fa8d9d502d24b9c1af852"
+    apiKey:            "YOUR_API_KEY",
+    authDomain:        "YOUR_PROJECT_ID.firebaseapp.com",
+    projectId:         "YOUR_PROJECT_ID",
+    storageBucket:     "YOUR_PROJECT_ID.appspot.com",
+    messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+    appId:             "YOUR_APP_ID"
   };
 </script>
 <!-- ════════════════════════════════════════ -->
@@ -890,99 +957,230 @@
 
 <!-- ══ ADD MODAL ══ -->
 <div class="overlay" id="add-modal">
-  <div class="modal">
+  <div class="modal modal-wide">
     <div class="modal-title">Log new trade</div>
-    <div class="row2">
-      <div class="field">
-        <label>Pair</label>
-        <div class="pair-selector" id="ps-add">
-          <div class="pair-input-wrap">
-            <input class="pair-search" id="f-pair-search" placeholder="Search or type pair…" autocomplete="off"
-              oninput="pairSearch('ps-add','f-pair')"
-              onfocus="pairOpen('ps-add')"
-              onkeydown="pairKey(event,'ps-add','f-pair')">
-            <button class="pair-clear" onclick="pairClear('ps-add','f-pair')" tabindex="-1">✕</button>
+
+    <!-- ── SECTION 1: PRE-ANALYSIS ── -->
+    <div class="modal-section">
+      <div class="modal-section-header">
+        <span class="modal-section-icon">🔍</span>
+        <span class="modal-section-title">Pre-Analysis</span>
+        <span class="modal-section-subtitle">Before entering the trade</span>
+      </div>
+      <div class="modal-section-body">
+
+        <!-- Pair + Direction -->
+        <div class="row2">
+          <div class="field" style="margin-bottom:0">
+            <label>Pair</label>
+            <div class="pair-selector" id="ps-add">
+              <div class="pair-input-wrap">
+                <input class="pair-search" id="f-pair-search" placeholder="Search or type pair…" autocomplete="off"
+                  oninput="pairSearch('ps-add','f-pair')"
+                  onfocus="pairOpen('ps-add')"
+                  onkeydown="pairKey(event,'ps-add','f-pair')">
+                <button class="pair-clear" onclick="pairClear('ps-add','f-pair')" tabindex="-1">✕</button>
+              </div>
+              <input type="hidden" id="f-pair">
+              <div class="pair-dropdown" id="ps-add-dd"></div>
+            </div>
           </div>
-          <input type="hidden" id="f-pair">
-          <div class="pair-dropdown" id="ps-add-dd"></div>
+          <div class="field" style="margin-bottom:0">
+            <label>Direction</label>
+            <select id="f-dir"><option value="Long">Long ↑</option><option value="Short">Short ↓</option></select>
+          </div>
         </div>
-      </div>
-      <div class="field"><label>Direction</label>
-        <select id="f-dir"><option value="Long">Long</option><option value="Short">Short</option></select>
-      </div>
-    </div>
-    <div class="row3">
-      <div class="field"><label>Entry price</label><input id="f-entry" type="number" step="any" placeholder="0.00000"></div>
-      <div class="field"><label>P&amp;L (pips / $)</label><input id="f-pnl" type="number" step="any" placeholder="e.g. 50 or -30"></div>
-      <div class="field"><label>Date</label><input id="f-date" type="date"></div>
-    </div>
-    <div class="field">
-      <label>Trading session</label>
-      <div class="session-grid" id="session-grid-add">
-        <button type="button" class="session-btn" data-session="Asian" onclick="selectSession('add','Asian')">
-          <div class="session-btn-top"><span class="session-icon">🌏</span><span class="session-btn-name">Asian</span></div>
-          <div class="session-btn-hours">00:00 – 09:00 UTC</div>
-        </button>
-        <button type="button" class="session-btn" data-session="Sydney" onclick="selectSession('add','Sydney')">
-          <div class="session-btn-top"><span class="session-icon">🦘</span><span class="session-btn-name">Sydney</span></div>
-          <div class="session-btn-hours">21:00 – 06:00 UTC</div>
-        </button>
-        <button type="button" class="session-btn" data-session="London" onclick="selectSession('add','London')">
-          <div class="session-btn-top"><span class="session-icon">🇬🇧</span><span class="session-btn-name">London</span></div>
-          <div class="session-btn-hours">08:00 – 17:00 UTC</div>
-        </button>
-        <button type="button" class="session-btn" data-session="New York" onclick="selectSession('add','New York')">
-          <div class="session-btn-top"><span class="session-icon">🗽</span><span class="session-btn-name">New York</span></div>
-          <div class="session-btn-hours">13:00 – 22:00 UTC</div>
-        </button>
-        <button type="button" class="session-btn" data-session="London/NY" onclick="selectSession('add','London/NY')">
-          <div class="session-btn-top"><span class="session-icon">⚡</span><span class="session-btn-name">London/NY</span></div>
-          <div class="session-btn-hours">13:00 – 17:00 UTC</div>
-        </button>
-        <button type="button" class="session-btn" data-session="Asian/London" onclick="selectSession('add','Asian/London')">
-          <div class="session-btn-top"><span class="session-icon">🌅</span><span class="session-btn-name">Asian/London</span></div>
-          <div class="session-btn-hours">07:00 – 09:00 UTC</div>
-        </button>
-      </div>
-      <input type="hidden" id="f-session">
-    </div>
-    <div class="field">
-      <label>Trade reasons</label>
-      <div class="checks">
-        <div class="check-item" id="ci-fvg" onclick="toggleCheck(this,'r-fvg')">
-          <input type="checkbox" id="r-fvg">
-          <div class="check-box">✓</div>
-          <span class="check-label">Fair Value Gap (FVG) formed</span>
-          <span class="check-tag">FVG</span>
+
+        <!-- Entry + Date -->
+        <div class="row2">
+          <div class="field" style="margin-bottom:0">
+            <label>Entry price</label>
+            <input id="f-entry" type="number" step="any" placeholder="0.00000">
+          </div>
+          <div class="field" style="margin-bottom:0">
+            <label>Date</label>
+            <input id="f-date" type="date">
+          </div>
         </div>
-        <div class="check-item" id="ci-bos" onclick="toggleCheck(this,'r-bos')">
-          <input type="checkbox" id="r-bos">
-          <div class="check-box">✓</div>
-          <span class="check-label">Break of Structure (BOS)</span>
-          <span class="check-tag">BOS</span>
+
+        <!-- Session -->
+        <div class="field" style="margin-bottom:0">
+          <label>Trading session</label>
+          <div class="session-grid" id="session-grid-add">
+            <button type="button" class="session-btn" data-session="Asian" onclick="selectSession('add','Asian')">
+              <div class="session-btn-top"><span class="session-icon">🌏</span><span class="session-btn-name">Asian</span></div>
+              <div class="session-btn-hours">00:00 – 09:00 UTC</div>
+            </button>
+            <button type="button" class="session-btn" data-session="Sydney" onclick="selectSession('add','Sydney')">
+              <div class="session-btn-top"><span class="session-icon">🦘</span><span class="session-btn-name">Sydney</span></div>
+              <div class="session-btn-hours">21:00 – 06:00 UTC</div>
+            </button>
+            <button type="button" class="session-btn" data-session="London" onclick="selectSession('add','London')">
+              <div class="session-btn-top"><span class="session-icon">🇬🇧</span><span class="session-btn-name">London</span></div>
+              <div class="session-btn-hours">08:00 – 17:00 UTC</div>
+            </button>
+            <button type="button" class="session-btn" data-session="New York" onclick="selectSession('add','New York')">
+              <div class="session-btn-top"><span class="session-icon">🗽</span><span class="session-btn-name">New York</span></div>
+              <div class="session-btn-hours">13:00 – 22:00 UTC</div>
+            </button>
+            <button type="button" class="session-btn" data-session="London/NY" onclick="selectSession('add','London/NY')">
+              <div class="session-btn-top"><span class="session-icon">⚡</span><span class="session-btn-name">London/NY</span></div>
+              <div class="session-btn-hours">13:00 – 17:00 UTC</div>
+            </button>
+            <button type="button" class="session-btn" data-session="Asian/London" onclick="selectSession('add','Asian/London')">
+              <div class="session-btn-top"><span class="session-icon">🌅</span><span class="session-btn-name">Asian/London</span></div>
+              <div class="session-btn-hours">07:00 – 09:00 UTC</div>
+            </button>
+          </div>
+          <input type="hidden" id="f-session">
         </div>
-        <div class="check-item" id="ci-liq" onclick="toggleCheck(this,'r-liq')">
-          <input type="checkbox" id="r-liq">
-          <div class="check-box">✓</div>
-          <span class="check-label">Sweep of liquidity</span>
-          <span class="check-tag">SWP</span>
+
+        <!-- Analysis checklist -->
+        <div class="field" style="margin-bottom:0">
+          <label>Market analysis checklist</label>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:2px">
+
+            <div class="analysis-item">
+              <div class="analysis-question">
+                Current trend on <strong>1H</strong>?
+                <em>Higher highs / higher lows = Bullish · Lower highs / lower lows = Bearish</em>
+              </div>
+              <div class="toggle-group" id="tg-trend1h">
+                <button type="button" class="toggle-opt" data-val="Bullish" onclick="toggleAnalysis('trend1h','Bullish',this)">📈 Bullish</button>
+                <button type="button" class="toggle-opt" data-val="Bearish" onclick="toggleAnalysis('trend1h','Bearish',this)">📉 Bearish</button>
+              </div>
+              <input type="hidden" id="f-trend1h">
+            </div>
+
+            <div class="analysis-item">
+              <div class="analysis-question">
+                Current trend on <strong>15m</strong>?
+                <em>Alignment with HTF bias preferred</em>
+              </div>
+              <div class="toggle-group" id="tg-trend15m">
+                <button type="button" class="toggle-opt" data-val="Bullish" onclick="toggleAnalysis('trend15m','Bullish',this)">📈 Bullish</button>
+                <button type="button" class="toggle-opt" data-val="Bearish" onclick="toggleAnalysis('trend15m','Bearish',this)">📉 Bearish</button>
+              </div>
+              <input type="hidden" id="f-trend15m">
+            </div>
+
+            <div class="analysis-item">
+              <div class="analysis-question">
+                Has <strong>liquidity</strong> been swept?
+                <em>Previous highs/lows or equal levels taken out</em>
+              </div>
+              <div class="toggle-group" id="tg-liqswept">
+                <button type="button" class="toggle-opt" data-val="Yes" onclick="toggleAnalysis('liqswept','Yes',this)">✅ Yes</button>
+                <button type="button" class="toggle-opt" data-val="No" onclick="toggleAnalysis('liqswept','No',this)">❌ No</button>
+              </div>
+              <input type="hidden" id="f-liqswept">
+            </div>
+
+            <div class="analysis-item">
+              <div class="analysis-question">
+                Is there a <strong>FVG or OB</strong> created?
+                <em>Fair Value Gap or Order Block present at POI</em>
+              </div>
+              <div class="toggle-group" id="tg-fvgob">
+                <button type="button" class="toggle-opt" data-val="Yes" onclick="toggleAnalysis('fvgob','Yes',this)">✅ Yes</button>
+                <button type="button" class="toggle-opt" data-val="No" onclick="toggleAnalysis('fvgob','No',this)">❌ No</button>
+              </div>
+              <input type="hidden" id="f-fvgob">
+            </div>
+
+            <div class="analysis-item">
+              <div class="analysis-question">
+                Is <strong>BOS</strong> created?
+                <em>Break of Structure confirming direction</em>
+              </div>
+              <div class="toggle-group" id="tg-bos">
+                <button type="button" class="toggle-opt" data-val="Yes" onclick="toggleAnalysis('bos','Yes',this)">✅ Yes</button>
+                <button type="button" class="toggle-opt" data-val="No" onclick="toggleAnalysis('bos','No',this)">❌ No</button>
+              </div>
+              <input type="hidden" id="f-bos">
+            </div>
+
+          </div>
         </div>
+
+        <!-- Pre-trade screenshots -->
+        <div class="field" style="margin-bottom:0">
+          <label>Chart screenshots</label>
+          <div class="upload-zone" id="upload-zone"
+            ondragover="event.preventDefault();this.classList.add('drag')"
+            ondragleave="this.classList.remove('drag')"
+            ondrop="handleDrop(event)">
+            <input type="file" id="img-input" multiple accept="image/*" onchange="handleFiles(this.files)">
+            <div class="upload-icon">🖼</div>
+            <strong>Drop images here or click to browse</strong>
+            <p>PNG, JPG, WEBP — multiple allowed</p>
+          </div>
+          <div class="preview-grid" id="preview-grid"></div>
+        </div>
+
+        <!-- Pre-trade notes -->
+        <div class="field" style="margin-bottom:0">
+          <label>Pre-trade notes</label>
+          <textarea id="f-prenotes" placeholder="Describe your setup rationale, confluence, bias…" style="min-height:72px"></textarea>
+        </div>
+
       </div>
     </div>
-    <div class="field">
-      <label>Chart screenshots</label>
-      <div class="upload-zone" id="upload-zone"
-        ondragover="event.preventDefault();this.classList.add('drag')"
-        ondragleave="this.classList.remove('drag')"
-        ondrop="handleDrop(event)">
-        <input type="file" id="img-input" multiple accept="image/*" onchange="handleFiles(this.files)">
-        <div class="upload-icon">🖼</div>
-        <strong>Drop images here or click to browse</strong>
-        <p>PNG, JPG, WEBP — multiple allowed</p>
+
+    <!-- ── SECTION 2: POST-ANALYSIS ── -->
+    <div class="modal-section">
+      <div class="modal-section-header">
+        <span class="modal-section-icon">📊</span>
+        <span class="modal-section-title">Post-Analysis</span>
+        <span class="modal-section-subtitle">Fill in after the trade closes</span>
       </div>
-      <div class="preview-grid" id="preview-grid"></div>
+      <div class="modal-section-body">
+
+        <!-- Outcome toggle -->
+        <div class="field" style="margin-bottom:0">
+          <label>Trade outcome</label>
+          <div class="outcome-toggle">
+            <div class="outcome-opt sel-pending" id="ot-pending" onclick="selectOutcome('Pending')">
+              <span class="outcome-opt-icon">⏳</span>
+              <span class="outcome-opt-label">Pending</span>
+            </div>
+            <div class="outcome-opt" id="ot-tp" onclick="selectOutcome('TP')">
+              <span class="outcome-opt-icon">✅</span>
+              <span class="outcome-opt-label">Take Profit</span>
+            </div>
+            <div class="outcome-opt" id="ot-sl" onclick="selectOutcome('SL')">
+              <span class="outcome-opt-icon">❌</span>
+              <span class="outcome-opt-label">Stop Loss</span>
+            </div>
+          </div>
+          <input type="hidden" id="f-outcome" value="Pending">
+        </div>
+
+        <!-- TP / SL / P&L -->
+        <div class="row3">
+          <div class="field" style="margin-bottom:0">
+            <label>TP price</label>
+            <input id="f-tp" type="number" step="any" placeholder="0.00000">
+          </div>
+          <div class="field" style="margin-bottom:0">
+            <label>SL price</label>
+            <input id="f-sl" type="number" step="any" placeholder="0.00000">
+          </div>
+          <div class="field" style="margin-bottom:0">
+            <label>P&amp;L (pips / $)</label>
+            <input id="f-pnl" type="number" step="any" placeholder="e.g. 50 or −30">
+          </div>
+        </div>
+
+        <!-- Post-trade description -->
+        <div class="field" style="margin-bottom:0">
+          <label>Post-trade review</label>
+          <textarea id="f-remarks" placeholder="What went well? What could be improved? Did price react as expected?" style="min-height:80px"></textarea>
+        </div>
+
+      </div>
     </div>
-    <div class="field"><label>Remarks (optional)</label><textarea id="f-remarks" placeholder="Pre-trade notes, confluence, session…"></textarea></div>
+
     <div class="modal-actions">
       <button class="btn" onclick="closeModals()">Cancel</button>
       <button class="btn btn-primary" id="save-btn" onclick="addTrade()">Save trade</button>
@@ -993,67 +1191,177 @@
 
 <!-- ══ EDIT MODAL ══ -->
 <div class="overlay" id="edit-modal">
-  <div class="modal">
+  <div class="modal modal-wide">
     <div class="modal-title">Update trade</div>
     <div id="edit-summary" style="background:var(--bg3);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:1.25rem;font-size:13px;color:var(--muted);font-family:var(--mono)"></div>
-    <div class="row2">
-      <div class="field"><label>Outcome</label>
-        <select id="e-outcome">
-          <option value="Pending">Pending</option>
-          <option value="TP">Hit Take Profit (TP) ✅</option>
-          <option value="SL">Hit Stop Loss (SL) ❌</option>
-        </select>
+
+    <!-- ── SECTION 1: PRE-ANALYSIS ── -->
+    <div class="modal-section">
+      <div class="modal-section-header">
+        <span class="modal-section-icon">🔍</span>
+        <span class="modal-section-title">Pre-Analysis</span>
       </div>
-      <div class="field"><label>P&amp;L (pips / $)</label><input id="e-pnl" type="number" step="any" placeholder="e.g. 50 or -30"></div>
-    </div>
-    <div class="field">
-      <label>Trading session</label>
-      <div class="session-grid" id="session-grid-edit">
-        <button type="button" class="session-btn" data-session="Asian" onclick="selectSession('edit','Asian')">
-          <div class="session-btn-top"><span class="session-icon">🌏</span><span class="session-btn-name">Asian</span></div>
-          <div class="session-btn-hours">00:00 – 09:00 UTC</div>
-        </button>
-        <button type="button" class="session-btn" data-session="Sydney" onclick="selectSession('edit','Sydney')">
-          <div class="session-btn-top"><span class="session-icon">🦘</span><span class="session-btn-name">Sydney</span></div>
-          <div class="session-btn-hours">21:00 – 06:00 UTC</div>
-        </button>
-        <button type="button" class="session-btn" data-session="London" onclick="selectSession('edit','London')">
-          <div class="session-btn-top"><span class="session-icon">🇬🇧</span><span class="session-btn-name">London</span></div>
-          <div class="session-btn-hours">08:00 – 17:00 UTC</div>
-        </button>
-        <button type="button" class="session-btn" data-session="New York" onclick="selectSession('edit','New York')">
-          <div class="session-btn-top"><span class="session-icon">🗽</span><span class="session-btn-name">New York</span></div>
-          <div class="session-btn-hours">13:00 – 22:00 UTC</div>
-        </button>
-        <button type="button" class="session-btn" data-session="London/NY" onclick="selectSession('edit','London/NY')">
-          <div class="session-btn-top"><span class="session-icon">⚡</span><span class="session-btn-name">London/NY</span></div>
-          <div class="session-btn-hours">13:00 – 17:00 UTC</div>
-        </button>
-        <button type="button" class="session-btn" data-session="Asian/London" onclick="selectSession('edit','Asian/London')">
-          <div class="session-btn-top"><span class="session-icon">🌅</span><span class="session-btn-name">Asian/London</span></div>
-          <div class="session-btn-hours">07:00 – 09:00 UTC</div>
-        </button>
+      <div class="modal-section-body">
+
+        <div class="field" style="margin-bottom:0">
+          <label>Market analysis checklist</label>
+          <div style="display:flex;flex-direction:column;gap:10px;margin-top:2px">
+
+            <div class="analysis-item">
+              <div class="analysis-question">Current trend on <strong>1H</strong>?</div>
+              <div class="toggle-group" id="etg-trend1h">
+                <button type="button" class="toggle-opt" data-val="Bullish" onclick="toggleAnalysisEdit('trend1h','Bullish',this)">📈 Bullish</button>
+                <button type="button" class="toggle-opt" data-val="Bearish" onclick="toggleAnalysisEdit('trend1h','Bearish',this)">📉 Bearish</button>
+              </div>
+              <input type="hidden" id="e-trend1h">
+            </div>
+
+            <div class="analysis-item">
+              <div class="analysis-question">Current trend on <strong>15m</strong>?</div>
+              <div class="toggle-group" id="etg-trend15m">
+                <button type="button" class="toggle-opt" data-val="Bullish" onclick="toggleAnalysisEdit('trend15m','Bullish',this)">📈 Bullish</button>
+                <button type="button" class="toggle-opt" data-val="Bearish" onclick="toggleAnalysisEdit('trend15m','Bearish',this)">📉 Bearish</button>
+              </div>
+              <input type="hidden" id="e-trend15m">
+            </div>
+
+            <div class="analysis-item">
+              <div class="analysis-question">Has <strong>liquidity</strong> been swept?</div>
+              <div class="toggle-group" id="etg-liqswept">
+                <button type="button" class="toggle-opt" data-val="Yes" onclick="toggleAnalysisEdit('liqswept','Yes',this)">✅ Yes</button>
+                <button type="button" class="toggle-opt" data-val="No" onclick="toggleAnalysisEdit('liqswept','No',this)">❌ No</button>
+              </div>
+              <input type="hidden" id="e-liqswept">
+            </div>
+
+            <div class="analysis-item">
+              <div class="analysis-question">Is there a <strong>FVG or OB</strong> created?</div>
+              <div class="toggle-group" id="etg-fvgob">
+                <button type="button" class="toggle-opt" data-val="Yes" onclick="toggleAnalysisEdit('fvgob','Yes',this)">✅ Yes</button>
+                <button type="button" class="toggle-opt" data-val="No" onclick="toggleAnalysisEdit('fvgob','No',this)">❌ No</button>
+              </div>
+              <input type="hidden" id="e-fvgob">
+            </div>
+
+            <div class="analysis-item">
+              <div class="analysis-question">Is <strong>BOS</strong> created?</div>
+              <div class="toggle-group" id="etg-bos">
+                <button type="button" class="toggle-opt" data-val="Yes" onclick="toggleAnalysisEdit('bos','Yes',this)">✅ Yes</button>
+                <button type="button" class="toggle-opt" data-val="No" onclick="toggleAnalysisEdit('bos','No',this)">❌ No</button>
+              </div>
+              <input type="hidden" id="e-bos">
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Session -->
+        <div class="field" style="margin-bottom:0">
+          <label>Trading session</label>
+          <div class="session-grid" id="session-grid-edit">
+            <button type="button" class="session-btn" data-session="Asian" onclick="selectSession('edit','Asian')">
+              <div class="session-btn-top"><span class="session-icon">🌏</span><span class="session-btn-name">Asian</span></div>
+              <div class="session-btn-hours">00:00 – 09:00 UTC</div>
+            </button>
+            <button type="button" class="session-btn" data-session="Sydney" onclick="selectSession('edit','Sydney')">
+              <div class="session-btn-top"><span class="session-icon">🦘</span><span class="session-btn-name">Sydney</span></div>
+              <div class="session-btn-hours">21:00 – 06:00 UTC</div>
+            </button>
+            <button type="button" class="session-btn" data-session="London" onclick="selectSession('edit','London')">
+              <div class="session-btn-top"><span class="session-icon">🇬🇧</span><span class="session-btn-name">London</span></div>
+              <div class="session-btn-hours">08:00 – 17:00 UTC</div>
+            </button>
+            <button type="button" class="session-btn" data-session="New York" onclick="selectSession('edit','New York')">
+              <div class="session-btn-top"><span class="session-icon">🗽</span><span class="session-btn-name">New York</span></div>
+              <div class="session-btn-hours">13:00 – 22:00 UTC</div>
+            </button>
+            <button type="button" class="session-btn" data-session="London/NY" onclick="selectSession('edit','London/NY')">
+              <div class="session-btn-top"><span class="session-icon">⚡</span><span class="session-btn-name">London/NY</span></div>
+              <div class="session-btn-hours">13:00 – 17:00 UTC</div>
+            </button>
+            <button type="button" class="session-btn" data-session="Asian/London" onclick="selectSession('edit','Asian/London')">
+              <div class="session-btn-top"><span class="session-icon">🌅</span><span class="session-btn-name">Asian/London</span></div>
+              <div class="session-btn-hours">07:00 – 09:00 UTC</div>
+            </button>
+          </div>
+          <input type="hidden" id="e-session">
+        </div>
+
+        <!-- Pre-trade notes -->
+        <div class="field" style="margin-bottom:0">
+          <label>Pre-trade notes</label>
+          <textarea id="e-prenotes" placeholder="Setup rationale, confluence, bias…" style="min-height:64px"></textarea>
+        </div>
+
+        <!-- Existing + new images -->
+        <div class="field" style="margin-bottom:0">
+          <label>Add more screenshots</label>
+          <div class="upload-zone"
+            ondragover="event.preventDefault();this.classList.add('drag')"
+            ondragleave="this.classList.remove('drag')"
+            ondrop="handleEditDrop(event)">
+            <input type="file" id="edit-img-input" multiple accept="image/*" onchange="handleEditFiles(this.files)">
+            <div class="upload-icon" style="font-size:20px">📎</div>
+            <strong>Attach more images</strong>
+          </div>
+          <div class="preview-grid" id="edit-preview-grid"></div>
+        </div>
+        <div id="existing-images" style="margin-top:4px"></div>
+
       </div>
-      <input type="hidden" id="e-session">
     </div>
-    <div class="row2">
-      <div class="field"><label>TP price</label><input id="e-tp" type="number" step="any" placeholder="0.00000"></div>
-      <div class="field"><label>SL price</label><input id="e-sl" type="number" step="any" placeholder="0.00000"></div>
-    </div>
-    <div class="field">
-      <label>Add more screenshots</label>
-      <div class="upload-zone"
-        ondragover="event.preventDefault();this.classList.add('drag')"
-        ondragleave="this.classList.remove('drag')"
-        ondrop="handleEditDrop(event)">
-        <input type="file" id="edit-img-input" multiple accept="image/*" onchange="handleEditFiles(this.files)">
-        <div class="upload-icon" style="font-size:20px">📎</div>
-        <strong>Attach more images</strong>
+
+    <!-- ── SECTION 2: POST-ANALYSIS ── -->
+    <div class="modal-section">
+      <div class="modal-section-header">
+        <span class="modal-section-icon">📊</span>
+        <span class="modal-section-title">Post-Analysis</span>
       </div>
-      <div class="preview-grid" id="edit-preview-grid"></div>
+      <div class="modal-section-body">
+
+        <!-- Outcome toggle -->
+        <div class="field" style="margin-bottom:0">
+          <label>Trade outcome</label>
+          <div class="outcome-toggle">
+            <div class="outcome-opt" id="eot-pending" onclick="selectOutcomeEdit('Pending')">
+              <span class="outcome-opt-icon">⏳</span>
+              <span class="outcome-opt-label">Pending</span>
+            </div>
+            <div class="outcome-opt" id="eot-tp" onclick="selectOutcomeEdit('TP')">
+              <span class="outcome-opt-icon">✅</span>
+              <span class="outcome-opt-label">Take Profit</span>
+            </div>
+            <div class="outcome-opt" id="eot-sl" onclick="selectOutcomeEdit('SL')">
+              <span class="outcome-opt-icon">❌</span>
+              <span class="outcome-opt-label">Stop Loss</span>
+            </div>
+          </div>
+          <input type="hidden" id="e-outcome" value="Pending">
+        </div>
+
+        <div class="row3">
+          <div class="field" style="margin-bottom:0">
+            <label>TP price</label>
+            <input id="e-tp" type="number" step="any" placeholder="0.00000">
+          </div>
+          <div class="field" style="margin-bottom:0">
+            <label>SL price</label>
+            <input id="e-sl" type="number" step="any" placeholder="0.00000">
+          </div>
+          <div class="field" style="margin-bottom:0">
+            <label>P&amp;L (pips / $)</label>
+            <input id="e-pnl" type="number" step="any" placeholder="e.g. 50 or −30">
+          </div>
+        </div>
+
+        <div class="field" style="margin-bottom:0">
+          <label>Post-trade review</label>
+          <textarea id="e-remarks" placeholder="What happened? What went well or wrong?" style="min-height:72px"></textarea>
+        </div>
+
+      </div>
     </div>
-    <div id="existing-images" style="margin-top:8px"></div>
-    <div class="field"><label>Remarks</label><textarea id="e-remarks" placeholder="Post-trade notes…"></textarea></div>
+
     <div class="modal-actions">
       <button class="btn btn-danger btn-sm" onclick="deleteTrade()" style="margin-right:auto">🗑 Delete</button>
       <button class="btn" onclick="closeModals()">Cancel</button>
@@ -1171,19 +1479,19 @@ function openAdd() {
   pairClear('ps-add','f-pair');
   document.getElementById('f-entry').value = '';
   document.getElementById('f-pnl').value = '';
+  document.getElementById('f-tp').value = '';
+  document.getElementById('f-sl').value = '';
   document.getElementById('f-remarks').value = '';
+  document.getElementById('f-prenotes').value = '';
   document.getElementById('f-date').value = today();
   document.getElementById('f-dir').value = 'Long';
-  ['ci-fvg','ci-bos','ci-liq'].forEach(id => {
-    const el = document.getElementById(id);
-    el.classList.remove('on');
-    el.querySelector('input').checked = false;
-  });
   pendingFiles = [];
   document.getElementById('preview-grid').innerHTML = '';
   document.getElementById('add-status').textContent = '';
   document.getElementById('save-btn').disabled = false;
   setSession('add', '');
+  clearAnalysis();
+  selectOutcome('Pending');
   document.getElementById('add-modal').classList.add('open');
 }
 
@@ -1210,14 +1518,18 @@ async function addTrade() {
     const trade = {
       pair, direction: document.getElementById('f-dir').value,
       entry, date: document.getElementById('f-date').value,
-      fvg: document.getElementById('r-fvg').checked,
-      bos: document.getElementById('r-bos').checked,
-      liq: document.getElementById('r-liq').checked,
-      outcome: 'Pending',
       session: document.getElementById('f-session').value || null,
+      trend1h:  document.getElementById('f-trend1h').value  || null,
+      trend15m: document.getElementById('f-trend15m').value || null,
+      liqswept: document.getElementById('f-liqswept').value || null,
+      fvgob:    document.getElementById('f-fvgob').value    || null,
+      bos:      document.getElementById('f-bos').value      || null,
+      prenotes: document.getElementById('f-prenotes').value.trim() || null,
+      outcome:  document.getElementById('f-outcome').value || 'Pending',
+      tp:  document.getElementById('f-tp').value  ? parseFloat(document.getElementById('f-tp').value)  : null,
+      sl:  document.getElementById('f-sl').value  ? parseFloat(document.getElementById('f-sl').value)  : null,
       pnl: pnlRaw !== '' ? parseFloat(pnlRaw) : null,
-      tp: null, sl: null,
-      remarks: document.getElementById('f-remarks').value.trim(),
+      remarks: document.getElementById('f-remarks').value.trim() || null,
       imageUrls,
       createdAt: firebase.firestore.FieldValue.serverTimestamp()
     };
@@ -1242,15 +1554,17 @@ function openEdit(id) {
   const t = trades.find(x => x.id === id);
   if (!t) return;
   document.getElementById('edit-summary').textContent = `${t.pair}  ${t.direction}  @  ${fmt(t.entry)}  ·  ${t.date}`;
-  document.getElementById('e-outcome').value = t.outcome || 'Pending';
+  selectOutcomeEdit(t.outcome || 'Pending');
   document.getElementById('e-tp').value = t.tp || '';
   document.getElementById('e-sl').value = t.sl || '';
   document.getElementById('e-pnl').value = t.pnl != null ? t.pnl : '';
   document.getElementById('e-remarks').value = t.remarks || '';
-  // pre-fill pair display in edit summary (no pair selector in edit modal, pair is fixed)
+  document.getElementById('e-prenotes').value = t.prenotes || '';
   document.getElementById('edit-status').textContent = '';
   document.getElementById('edit-save-btn').disabled = false;
   setSession('edit', t.session || '');
+  // prefill analysis checklist
+  ANALYSIS_FIELDS.forEach(f => setAnalysis('e-', f, t[f] || '', 'etg-'));
   editPendingFiles = [];
   document.getElementById('edit-preview-grid').innerHTML = '';
   renderEditImages(t);
@@ -1276,7 +1590,13 @@ async function saveEdit() {
       sl: document.getElementById('e-sl').value ? parseFloat(document.getElementById('e-sl').value) : null,
       pnl: pnlRaw !== '' ? parseFloat(pnlRaw) : null,
       session: document.getElementById('e-session').value || null,
-      remarks: document.getElementById('e-remarks').value.trim(),
+      trend1h:  document.getElementById('e-trend1h').value  || null,
+      trend15m: document.getElementById('e-trend15m').value || null,
+      liqswept: document.getElementById('e-liqswept').value || null,
+      fvgob:    document.getElementById('e-fvgob').value    || null,
+      bos:      document.getElementById('e-bos').value      || null,
+      prenotes: document.getElementById('e-prenotes').value.trim() || null,
+      remarks:  document.getElementById('e-remarks').value.trim() || null,
       imageUrls: newUrls
     };
     await db.collection('trades').doc(editId).update(updates);
@@ -1628,6 +1948,70 @@ async function deleteEditImage(tradeId, imgIdx) {
 }
 
 // ─────────────────────────────
+// Analysis toggle helpers
+// ─────────────────────────────
+const ANALYSIS_FIELDS = ['trend1h','trend15m','liqswept','fvgob','bos'];
+
+function toggleAnalysis(field, val, btn) {
+  const hidden = document.getElementById('f-' + field);
+  const group  = document.getElementById('tg-' + field);
+  const already = hidden.value === val;
+  // Clear all in group
+  group.querySelectorAll('.toggle-opt').forEach(b => b.className = 'toggle-opt');
+  if (already) { hidden.value = ''; return; }
+  hidden.value = val;
+  const cls = val === 'Bullish' ? 'sel-bullish' : val === 'Bearish' ? 'sel-bearish' : val === 'Yes' ? 'sel-yes' : 'sel-no';
+  btn.classList.add(cls);
+}
+
+function toggleAnalysisEdit(field, val, btn) {
+  const hidden = document.getElementById('e-' + field);
+  const group  = document.getElementById('etg-' + field);
+  const already = hidden.value === val;
+  group.querySelectorAll('.toggle-opt').forEach(b => b.className = 'toggle-opt');
+  if (already) { hidden.value = ''; return; }
+  hidden.value = val;
+  const cls = val === 'Bullish' ? 'sel-bullish' : val === 'Bearish' ? 'sel-bearish' : val === 'Yes' ? 'sel-yes' : 'sel-no';
+  btn.classList.add(cls);
+}
+
+function setAnalysis(prefix, field, val, groupPrefix) {
+  const hidden = document.getElementById(prefix + field);
+  const group  = document.getElementById(groupPrefix + field);
+  if (!hidden || !group) return;
+  hidden.value = val || '';
+  group.querySelectorAll('.toggle-opt').forEach(b => {
+    b.className = 'toggle-opt';
+    if (val && b.dataset.val === val) {
+      const cls = val === 'Bullish' ? 'sel-bullish' : val === 'Bearish' ? 'sel-bearish' : val === 'Yes' ? 'sel-yes' : 'sel-no';
+      b.classList.add(cls);
+    }
+  });
+}
+
+function clearAnalysis() {
+  ANALYSIS_FIELDS.forEach(f => setAnalysis('f-', f, '', 'tg-'));
+}
+
+function selectOutcome(val) {
+  document.getElementById('f-outcome').value = val;
+  ['pending','tp','sl'].forEach(k => {
+    const el = document.getElementById('ot-' + k);
+    el.className = 'outcome-opt';
+    if (k === val.toLowerCase()) el.classList.add('sel-' + k);
+  });
+}
+
+function selectOutcomeEdit(val) {
+  document.getElementById('e-outcome').value = val;
+  ['pending','tp','sl'].forEach(k => {
+    const el = document.getElementById('eot-' + k);
+    el.className = 'outcome-opt';
+    if (k === val.toLowerCase()) el.classList.add('sel-' + k);
+  });
+}
+
+// ─────────────────────────────
 // UI helpers
 // ─────────────────────────────
 function toggleCheck(el, cbId) {
@@ -1681,10 +2065,16 @@ function tradeCardHtml(t) {
   const oc = t.outcome === 'TP' ? 'tp' : t.outcome === 'SL' ? 'sl' : 'pending';
   const dirBadge = t.direction === 'Long' ? 'badge-long' : 'badge-short';
   const ocBadge = t.outcome === 'TP' ? 'badge-tp' : t.outcome === 'SL' ? 'badge-sl' : 'badge-pending';
-  const reasons = [{key:'fvg',label:'FVG'},{key:'bos',label:'BOS'},{key:'liq',label:'SWP'}];
-  const pills = reasons.map(r =>
-    `<span class="rpill ${t[r.key] ? 'on' : ''}"><span class="rpill-dot"></span>${r.label}</span>`
-  ).join('');
+  // Pre-analysis summary pills
+  const trendCls1h  = t.trend1h  === 'Bullish' ? 'sel-bullish' : t.trend1h  === 'Bearish' ? 'sel-bearish' : '';
+  const trendCls15m = t.trend15m === 'Bullish' ? 'sel-bullish' : t.trend15m === 'Bearish' ? 'sel-bearish' : '';
+  const analysisPills = [
+    t.trend1h  ? `<span class="toggle-opt ${trendCls1h}"  style="font-size:10px;padding:2px 8px">1H: ${t.trend1h}</span>` : '',
+    t.trend15m ? `<span class="toggle-opt ${trendCls15m}" style="font-size:10px;padding:2px 8px">15m: ${t.trend15m}</span>` : '',
+    t.liqswept ? `<span class="toggle-opt ${t.liqswept==='Yes'?'sel-yes':'sel-no'}" style="font-size:10px;padding:2px 8px">Liq: ${t.liqswept}</span>` : '',
+    t.fvgob    ? `<span class="toggle-opt ${t.fvgob==='Yes'?'sel-yes':'sel-no'}"    style="font-size:10px;padding:2px 8px">FVG/OB: ${t.fvgob}</span>` : '',
+    t.bos      ? `<span class="toggle-opt ${t.bos==='Yes'?'sel-yes':'sel-no'}"      style="font-size:10px;padding:2px 8px">BOS: ${t.bos}</span>` : '',
+  ].filter(Boolean).join('');
   const pnlHtml = t.pnl != null
     ? `<div class="tc-price">P&L <span class="${t.pnl >= 0 ? 'pos' : 'neg'}">${fmtPnl(t.pnl)}</span></div>`
     : '';
@@ -1694,7 +2084,8 @@ function tradeCardHtml(t) {
       ).join('')}${t.imageUrls.length > 4
         ? `<div class="tc-img-count" onclick="openLightbox(${JSON.stringify(t.imageUrls)},0)">+${t.imageUrls.length - 4} more</div>`
         : ''}</div>` : '';
-  const remarks = t.remarks ? `<div class="tc-remarks">${t.remarks}</div>` : '';
+  const prenotes = t.prenotes ? `<div class="tc-remarks" style="border-left-color:var(--blue-border);color:var(--blue);opacity:0.8"><span style="font-size:10px;text-transform:uppercase;letter-spacing:.06em;margin-right:6px">Pre:</span>${t.prenotes}</div>` : '';
+  const remarks   = t.remarks  ? `<div class="tc-remarks">${t.remarks}</div>` : '';
   const sessionBadge = t.session
     ? `<span class="badge ${SESSION_BADGE[t.session] || 'badge-pending'}">${SESSION_ICON[t.session] || ''} ${t.session}</span>`
     : '';
@@ -1718,7 +2109,7 @@ function tradeCardHtml(t) {
       ${t.sl ? `<div class="tc-price">SL <span style="color:var(--red)">${fmt(t.sl)}</span></div>` : ''}
       ${pnlHtml}
     </div>
-    <div class="tc-reasons">${pills}</div>
+    ${analysisPills ? `<div class="tc-reasons" style="flex-wrap:wrap;gap:4px">${analysisPills}</div>` : ''}
     ${imgs}
     ${remarks}
   </div>`;
@@ -1978,7 +2369,13 @@ function reportCardHtml(t, tradeNum) {
   const oc = t.outcome === 'TP' ? 'tp' : t.outcome === 'SL' ? 'sl' : 'pending';
   const dirBadge = t.direction === 'Long' ? 'badge-long' : 'badge-short';
   const ocBadge = t.outcome === 'TP' ? 'badge-tp' : t.outcome === 'SL' ? 'badge-sl' : 'badge-pending';
-  const reasons = [{key:'fvg',label:'Fair Value Gap',tag:'FVG'},{key:'bos',label:'Break of Structure',tag:'BOS'},{key:'liq',label:'Sweep of Liquidity',tag:'SWP'}];
+  const analysisItems = [
+    { label: '1H Trend',    val: t.trend1h,  icon: t.trend1h==='Bullish'?'📈':'📉' },
+    { label: '15m Trend',   val: t.trend15m, icon: t.trend15m==='Bullish'?'📈':'📉' },
+    { label: 'Liq Swept',   val: t.liqswept, icon: t.liqswept==='Yes'?'✅':'❌' },
+    { label: 'FVG / OB',    val: t.fvgob,    icon: t.fvgob==='Yes'?'✅':'❌' },
+    { label: 'BOS',         val: t.bos,      icon: t.bos==='Yes'?'✅':'❌' },
+  ].filter(x => x.val);
 
   // Prices section
   const prices = [
@@ -1995,10 +2392,6 @@ function reportCardHtml(t, tradeNum) {
   ).join('');
 
   // Reasons
-  const reasonPills = reasons.map(r =>
-    `<span class="rpill ${t[r.key] ? 'on' : ''}"><span class="rpill-dot"></span>${r.tag}</span>`
-  ).join('');
-  const activeReasons = reasons.filter(r => t[r.key]).map(r => r.label);
 
   // Images column
   const imgs = t.imageUrls && t.imageUrls.length ? t.imageUrls : [];
@@ -2067,12 +2460,22 @@ function reportCardHtml(t, tradeNum) {
           <div class="rc-price-grid">${priceGrid}</div>
         </div>
 
-        <!-- Setup reasons -->
-        <div>
-          <div class="rc-section-label">Setup confluences</div>
-          <div class="rc-reasons-wrap">${reasonPills}</div>
-          ${activeReasons.length ? `<div style="font-size:12px;color:var(--muted);margin-top:8px;line-height:1.7">${activeReasons.join(' · ')}</div>` : ''}
-        </div>
+        <!-- Pre-analysis checklist -->
+        ${analysisItems.length ? `<div>
+          <div class="rc-section-label">Pre-analysis checklist</div>
+          <div style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
+            ${analysisItems.map(a => `<div style="display:flex;align-items:center;justify-content:space-between;font-size:13px">
+              <span style="color:var(--muted)">${a.label}</span>
+              <span style="font-weight:600">${a.icon} ${a.val}</span>
+            </div>`).join('')}
+          </div>
+        </div>` : ''}
+
+        <!-- Pre-trade notes -->
+        ${t.prenotes ? `<div>
+          <div class="rc-section-label">Pre-trade notes</div>
+          <div class="rc-remarks-box" style="border-left-color:var(--blue-border);color:var(--blue)">${t.prenotes}</div>
+        </div>` : ''}
 
         <!-- Session -->
         ${t.session ? `<div>
